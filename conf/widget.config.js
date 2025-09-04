@@ -39,21 +39,21 @@ module.exports = {
     {
       name: 'OAOA (现在就是永远)',
       artist: '五月天',
-      url: 'http://music.163.com/song/media/outer/url?id=22197014.mp3',
+      url: 'https://nf-sycdn.kuwo.cn/6876b58ad7d9de6df5c3a23b29ecd418/68b8f9d4/resource/n1/64/41/3258608497.mp3',
       cover:
         'http://p1.music.126.net/5Bu3XLAvh-M9Iwkh0wlOYg==/109951168162347102.jpg'
     },
     {
       name: '笑忘歌',
       artist: '五月天',
-      url: 'http://music.163.com/song/media/outer/url?id=22198025.mp3',
+      url: 'https://www.gequbao.com/music/346425',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     },
   {
       name: '后青春期的诗',
       artist: '五月天',
-      url: 'http://music.163.com/song/media/outer/url?id=22198024.mp3',
+      url: 'https://www.gequbao.com/music/576893',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     }
