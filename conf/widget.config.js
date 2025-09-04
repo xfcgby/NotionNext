@@ -46,7 +46,7 @@ module.exports = {
     {
       name: '笑忘歌',
       artist: '五月天',
-      url: https://lw-sycdn.kuwo.cn/457c7c83640b50a692cba21e5f76f6d4/68b91d9c/resource/30106/trackmedia/M500000lEZ720gK8zq.mp3',
+      url: 'https://lw-sycdn.kuwo.cn/457c7c83640b50a692cba21e5f76f6d4/68b91d9c/resource/30106/trackmedia/M500000lEZ720gK8zq.mp3',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     },
