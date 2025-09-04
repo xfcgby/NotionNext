@@ -39,7 +39,7 @@ module.exports = {
     {
       name: 'OAOA (现在就是永远)',
       artist: '五月天',
-      url: 'https://nf-sycdn.kuwo.cn/697ea643232a910d17b7def928a945c3/68b91eeb/resource/n1/64/41/3258608497.mp3',
+      url: 'https://er-sycdn.kuwo.cn/5794a6975c4920e05994994e943931d6/68b913f0/resource/30106/trackmedia/M500000xFQ7C3VJCb3.mp3',
       cover:
         'http://p1.music.126.net/5Bu3XLAvh-M9Iwkh0wlOYg==/109951168162347102.jpg'
     },
