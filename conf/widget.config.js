@@ -41,13 +41,12 @@ module.exports = {
       artist: '五月天',
       url: 'https://er-sycdn.kuwo.cn/5794a6975c4920e05994994e943931d6/68b913f0/resource/30106/trackmedia/M500000xFQ7C3VJCb3.mp3',
       cover:
-        'http://p1.music.126.net/5Bu3XLAvh-M9Iwkh0wlOYg==/109951168162347102.jpg',
-      lrc:'OAOA (现在就是永远)-五月天.lrc'
+        'http://p1.music.126.net/5Bu3XLAvh-M9Iwkh0wlOYg==/109951168162347102.jpg'
     },
     {
       name: '笑忘歌',
       artist: '五月天',
-      url: 'https://lw-sycdn.kuwo.cn/457c7c83640b50a692cba21e5f76f6d4/68b91d9c/resource/30106/trackmedia/M500000lEZ720gK8zq.mp3',
+      url: 'https://lw-sycdn.kuwo.cn/82d1d892ec8a1a35dc04f3039bac1eb0/68b93e5d/resource/30106/trackmedia/M500000lEZ720gK8zq.mp3',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     },
