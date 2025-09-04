@@ -46,14 +46,14 @@ module.exports = {
     {
       name: '笑忘歌',
       artist: '五月天',
-      url: 'https://www.gequbao.com/music/346425',
+      url: 'https://lw-sycdn.kuwo.cn/fb0c67d93a6093d2796923d89dd2c736/68b8f9d7/resource/30106/trackmedia/M500000lEZ720gK8zq.mp3',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     },
   {
       name: '后青春期的诗',
       artist: '五月天',
-      url: 'https://www.gequbao.com/music/576893',
+      url: 'https://lw-sycdn.kuwo.cn/303554954eb0cb3681f14ae8eb52e1b3/68b9065d/resource/30106/trackmedia/M500001Ujqow3yUgSA.mp3',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     }
