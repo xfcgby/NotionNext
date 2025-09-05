@@ -46,14 +46,14 @@ module.exports = {
     {
       name: '笑忘歌',
       artist: '五月天',
-      url: 'https://lw-sycdn.kuwo.cn/82d1d892ec8a1a35dc04f3039bac1eb0/68b93e5d/resource/30106/trackmedia/M500000lEZ720gK8zq.mp3',
+      url: 'https://lw-sycdn.kuwo.cn/72a73284583a1c13d0e35a167b8b162e/68ba6d88/resource/30106/trackmedia/M500000lEZ720gK8zq.mp3?bitrate$128&from=vip',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     },
   {
       name: '后青春期的诗',
       artist: '五月天',
-      url: 'https://lw-sycdn.kuwo.cn/981e90fd29091e39da38c7753f5cd230/68b928a0/resource/30106/trackmedia/M500001Ujqow3yUgSA.mp3',
+      url: 'https://lw-sycdn.kuwo.cn/4a4173237fb3f5ce45bd854534cffd8e/68ba7928/resource/30106/trackmedia/M500001Ujqow3yUgSA.mp3?bitrate$128&from=vip',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     }
