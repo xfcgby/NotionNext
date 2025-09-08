@@ -53,7 +53,7 @@ module.exports = {
   {
       name: '后青春期的诗',
       artist: '五月天',
-      url: 'https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8zMTRmZDMzNjY5NjllMzZmL0VWTktkQkttdWN4R2xOY1VmSlRJOVgwQml0aFhWdExwdGZzQ002Z25nUU5lVUE_ZT12SnZnTno.mp3',
+      url: 'https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8zMTRmZDMzNjY5NjllMzZmL0VkUHNRTVdXejlwQ3JvaGdRbnRmaThZQkJHMEQ2dUlGckZoYW85LVVtUmRjOWc_ZT1ybE9welU.mp3',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     }
