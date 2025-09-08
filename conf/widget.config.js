@@ -39,21 +39,21 @@ module.exports = {
     {
       name: 'OAOA (现在就是永远)',
       artist: '五月天',
-      url: 'https://www.byfuns.top/api/1/?id=22197014&level=lossless',
+      url: 'https://1drv.ms/u/c/314fd3366969e36f/EUrqqpJiMSlGpI2735iN-uwBoUwlSdqJyOEy-Vd0JX4kQg?e=ugj4hF',
       cover:
         'http://p1.music.126.net/5Bu3XLAvh-M9Iwkh0wlOYg==/109951168162347102.jpg'
     },
     {
       name: '笑忘歌',
       artist: '五月天',
-      url: 'https://lw-sycdn.kuwo.cn/77ea823cf0082a090735758586b96419/68ba8a3e/resource/30106/trackmedia/M500000lEZ720gK8zq.mp3?bitrate$128&from=vip',
+      url: 'https://1drv.ms/u/c/314fd3366969e36f/EQVXoWsuq1tFihvETlsNFjQBefXSj4kqHOOav50r22akXw?e=sTvO5B',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     },
   {
       name: '后青春期的诗',
       artist: '五月天',
-      url: 'https://lw-sycdn.kuwo.cn/4a4173237fb3f5ce45bd854534cffd8e/68ba7928/resource/30106/trackmedia/M500001Ujqow3yUgSA.mp3?bitrate$128&from=vip',
+      url: 'https://1drv.ms/u/c/314fd3366969e36f/EVNKdBKmucxGlNcUfJTI9X0BithXVtLptfsCM6gngQNeUA?e=vJvgNz',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     }
