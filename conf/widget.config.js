@@ -39,21 +39,21 @@ module.exports = {
     {
       name: 'OAOA (现在就是永远)',
       artist: '五月天',
-      url: 'https://1drv.ms/u/c/314fd3366969e36f/EUrqqpJiMSlGpI2735iN-uwBoUwlSdqJyOEy-Vd0JX4kQg?e=ugj4hF',
+      url: 'https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8zMTRmZDMzNjY5NjllMzZmL0VVcnFxcEppTVNsR3BJMjczNWlOLXV3Qm9Vd2xTZHFKeU9FeS1WZDBKWDRrUWc_ZT11Z2o0aEY.mp3',
       cover:
         'http://p1.music.126.net/5Bu3XLAvh-M9Iwkh0wlOYg==/109951168162347102.jpg'
     },
     {
       name: '笑忘歌',
       artist: '五月天',
-      url: 'https://1drv.ms/u/c/314fd3366969e36f/EQVXoWsuq1tFihvETlsNFjQBefXSj4kqHOOav50r22akXw?e=sTvO5B',
+      url: 'https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8zMTRmZDMzNjY5NjllMzZmL0VRVlhvV3N1cTF0RmlodkVUbHNORmpRQmVmWFNqNGtxSE9PYXY1MHIyMmFrWHc_ZT1zVHZPNUI.mp3',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     },
   {
       name: '后青春期的诗',
       artist: '五月天',
-      url: 'https://1drv.ms/u/c/314fd3366969e36f/EVNKdBKmucxGlNcUfJTI9X0BithXVtLptfsCM6gngQNeUA?e=vJvgNz',
+      url: 'https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy8zMTRmZDMzNjY5NjllMzZmL0VWTktkQkttdWN4R2xOY1VmSlRJOVgwQml0aFhWdExwdGZzQ002Z25nUU5lVUE_ZT12SnZnTno.mp3',
       cover:
         'http://p2.music.126.net/l0vGEnowGfj6DgFSGojyfQ==/109951168163397768.jpg'
     }
