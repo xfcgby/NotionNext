@@ -35,25 +35,23 @@ const ThemeGlobalHexo = createContext()
 export const useHexoGlobal = () => useContext(ThemeGlobalHexo)
 
 /**
- * 🌟 核心骨架：纯净且绝对锁定的 Stack 双栏响应式骨架
+ * 🌟 核心基础容器（解决 LayoutBase missing 报错）
+ * 框架强制要求导出此组件，这里作为纯净的外层大容器包裹
  */
 const LayoutBase = props => {
   const { children } = props
-
   return (
     <div className="min-h-screen bg-[#f6f6f6] dark:bg-[#1a191f] text-gray-900 antialiased p-4 transition-colors duration-300">
       <div className="max-w-6xl mx-auto relative flex flex-col md:flex-row gap-6 items-start">
-        
-        {/* 1. 左侧固定卡片边栏 (固定 280px 宽度) */}
-        <div className="w-full md:w-[280px] shrink-0 md:sticky md:top-4 z-10">
+        {/* 精准控制：在这里引入一次侧边栏，所有子页面就不需要单独引了 */}
+        <div className="w-full md:w-[280px] shrink-0 md:sticky md:top-4 z-20">
           <SideBar {...props} />
         </div>
-
-        {/* 2. 右侧主内容区 */}
-        <main className="flex-1 min-w-0 w-full space-y-6">
+        
+        {/* 内容区域 */}
+        <main className="flex-1 min-w-0 w-full space-y-6 z-10">
           {children}
         </main>
-
       </div>
     </div>
   )
@@ -66,13 +64,13 @@ const LayoutIndex = props => {
   const { posts, allPosts } = props 
 
   return (
-    <LayoutBase {...props}>
+    <>
       {/* 创作热力图卡片 */}
       <StackHeatmap allPosts={allPosts || posts} />
 
       {/* 文章列表卡片流 */}
       <LayoutPostList {...props} />
-    </LayoutBase>
+    </>
   )
 }
 
@@ -114,21 +112,19 @@ const LayoutSearch = props => {
   })
 
   return (
-    <LayoutBase {...props}>
-      <div className='w-full'>
-        {!currentSearch ? (
-          <SearchNav {...props} />
-        ) : (
-          <div id='posts-wrapper'>
-            {siteConfig('POST_LIST_STYLE') === 'page' ? (
-              <BlogPostListPage {...props} />
-            ) : (
-              <BlogPostListScroll {...props} />
-            )}
-          </div>
-        )}
-      </div>
-    </LayoutBase>
+    <div className='w-full'>
+      {!currentSearch ? (
+        <SearchNav {...props} />
+      ) : (
+        <div id='posts-wrapper'>
+          {siteConfig('POST_LIST_STYLE') === 'page' ? (
+            <BlogPostListPage {...props} />
+          ) : (
+            <BlogPostListScroll {...props} />
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -138,21 +134,19 @@ const LayoutSearch = props => {
 const LayoutArchive = props => {
   const { archivePosts } = props
   return (
-    <LayoutBase {...props}>
-      <div className='w-full'>
-        <Card className='w-full'>
-          <div className='mb-10 pb-20 bg-white md:p-12 p-3 min-h-full dark:bg-[#26252c] rounded-3xl shadow-sm'>
-            {Object.keys(archivePosts).map(archiveTitle => (
-              <BlogPostArchive
-                key={archiveTitle}
-                posts={archivePosts[archiveTitle]}
-                archiveTitle={archiveTitle}
-              />
-            ))}
-          </div>
-        </Card>
-      </div>
-    </LayoutBase>
+    <div className='w-full'>
+      <Card className='w-full'>
+        <div className='mb-10 pb-20 bg-white md:p-12 p-3 min-h-full dark:bg-[#26252c] rounded-3xl shadow-sm'>
+          {Object.keys(archivePosts).map(archiveTitle => (
+            <BlogPostArchive
+              key={archiveTitle}
+              posts={archivePosts[archiveTitle]}
+              archiveTitle={archiveTitle}
+            />
+          ))}
+        </div>
+      </Card>
+    </div>
   )
 }
 
@@ -180,34 +174,32 @@ const LayoutSlug = props => {
   }, [post])
 
   return (
-    <LayoutBase {...props}>
-      <div className='w-full lg:hover:shadow rounded-3xl p-6 bg-white dark:bg-[#26252c] shadow-sm article'>
-        {lock && <ArticleLock validPassword={validPassword} />}
+    <div className='w-full lg:hover:shadow rounded-3xl p-6 bg-white dark:bg-[#26252c] shadow-sm article'>
+      {lock && <ArticleLock validPassword={validPassword} />}
 
-        {!lock && post && (
-          <div className='overflow-x-auto flex-grow mx-auto md:w-full'>
-            <article id='article-wrapper' className='subpixel-antialiased overflow-y-hidden'>
-              <section className='justify-center mx-auto max-w-2xl lg:max-w-full'>
-                {post && <NotionPage post={post} />}
-              </section>
+      {!lock && post && (
+        <div className='overflow-x-auto flex-grow mx-auto md:w-full'>
+          <article id='article-wrapper' className='subpixel-antialiased overflow-y-hidden'>
+            <section className='justify-center mx-auto max-w-2xl lg:max-w-full'>
+              {post && <NotionPage post={post} />}
+            </section>
 
-              <ShareBar post={post} />
-              {post?.type === 'Post' && (
-                <div className="mt-8 space-y-6">
-                  <ArticleCopyright {...props} />
-                  <ArticleRecommend {...props} />
-                  <ArticleAdjacent {...props} />
-                </div>
-              )}
-            </article>
+            <ShareBar post={post} />
+            {post?.type === 'Post' && (
+              <div className="mt-8 space-y-6">
+                <ArticleCopyright {...props} />
+                <ArticleRecommend {...props} />
+                <ArticleAdjacent {...props} />
+              </div>
+            )}
+          </article>
 
-            <div className='pt-6 duration-200 overflow-x-auto bg-white dark:bg-[#26252c]'>
-              <Comment frontMatter={post} />
-            </div>
+          <div className='pt-6 duration-200 overflow-x-auto bg-white dark:bg-[#26252c]'>
+            <Comment frontMatter={post} />
           </div>
-        )}
-      </div>
-    </LayoutBase>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -248,24 +240,22 @@ const LayoutCategoryIndex = props => {
   const { categoryOptions } = props
   const { locale } = useGlobal()
   return (
-    <LayoutBase {...props}>
-      <div className='w-full'>
-        <Card className='w-full min-h-screen bg-white dark:bg-[#26252c] rounded-3xl p-6 shadow-sm'>
-          <div className='dark:text-gray-200 mb-5 font-bold'>
-            <i className='mr-2 fas fa-th' /> {locale.COMMON.CATEGORY}:
-          </div>
-          <div id='category-list' className='duration-200 flex flex-wrap gap-4'>
-            {categoryOptions?.map(category => (
-              <SmartLink key={category.name} href={`/category/${category.name}`} passHref legacyBehavior>
-                <div className='duration-300 dark:hover:text-white px-4 py-2 cursor-pointer bg-gray-50 dark:bg-zinc-800 rounded-xl hover:text-purple-500 transition-colors'>
-                  <i className='mr-2 fas fa-folder' /> {category.name} ({category.count})
-                </div>
-              </SmartLink>
-            ))}
-          </div>
-        </Card>
-      </div>
-    </LayoutBase>
+    <div className='w-full'>
+      <Card className='w-full min-h-screen bg-white dark:bg-[#26252c] rounded-3xl p-6 shadow-sm'>
+        <div className='dark:text-gray-200 mb-5 font-bold'>
+          <i className='mr-2 fas fa-th' /> {locale.COMMON.CATEGORY}:
+        </div>
+        <div id='category-list' className='duration-200 flex flex-wrap gap-4'>
+          {categoryOptions?.map(category => (
+            <SmartLink key={category.name} href={`/category/${category.name}`} passHref legacyBehavior>
+              <div className='duration-300 dark:hover:text-white px-4 py-2 cursor-pointer bg-gray-50 dark:bg-zinc-800 rounded-xl hover:text-purple-500 transition-colors'>
+                <i className='mr-2 fas fa-folder' /> {category.name} ({category.count})
+              </div>
+            </SmartLink>
+          ))}
+        </div>
+      </Card>
+    </div>
   )
 }
 
@@ -276,29 +266,28 @@ const LayoutTagIndex = props => {
   const { tagOptions } = props
   const { locale } = useGlobal()
   return (
-    <LayoutBase {...props}>
-      <div className='w-full'>
-        <Card className='w-full bg-white dark:bg-[#26252c] rounded-3xl p-6 shadow-sm'>
-          <div className='dark:text-gray-200 mb-5 font-bold'>
-            <i className='mr-2 fas fa-tag' /> {locale.COMMON.TAGS}:
-          </div>
-          <div id='tags-list' className='duration-200 flex flex-wrap gap-2'>
-            {tagOptions.map(tag => (
-              <div key={tag.name}>
-                <TagItemMini key={tag.name} tag={tag} />
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-    </LayoutBase>
+    <div className='w-full'>
+      <Card className='w-full bg-white dark:bg-[#26252c] rounded-3xl p-6 shadow-sm'>
+        <div className='dark:text-gray-200 mb-5 font-bold'>
+          <i className='mr-2 fas fa-tag' /> {locale.COMMON.TAGS}:
+        </div>
+        <div id='tags-list' className='duration-200 flex flex-wrap gap-2'>
+          {tagOptions.map(tag => (
+            <div key={tag.name}>
+              <TagItemMini key={tag.name} tag={tag} />
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
   )
 }
 
-// ⚡ 核心修复：这里不再导出 LayoutBase，保证 Vercel 编译正常，消除多出主页和双重边栏的 Bug
+// ⚡ 核心修复：顺应 NotionNext 的底层设计，重新正常导出 LayoutBase 绕过 Vercel 编译拦截
 export {
   Layout404,
   LayoutArchive,
+  LayoutBase,
   LayoutCategoryIndex,
   LayoutIndex,
   LayoutPostList,
