@@ -34,15 +34,15 @@ const ThemeGlobalHexo = createContext()
 export const useHexoGlobal = () => useContext(ThemeGlobalHexo)
 
 /**
- * 🌟 核心骨架隔离：完全控制生命周期，物理清除二次注入与残留
+ * 🌟 核心独苗大骨架：全站唯一的边栏与主区布局容器
+ * 坚决不在这层以外的任何地方重复调用 LayoutBase
  */
 const LayoutBase = props => {
   const { children } = props
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
 
-  // ⚡ 防注入锁 1：建立严格的客户端单例挂载机制。
-  // 切换任意路由（asPath）时强制刷新，抹除旧页面 DOM 残留，防止旧侧边栏或重复主页未被销毁
+  // 挂载锁：防止 Next.js 服务端快照水合冲突
   useEffect(() => {
     setMounted(true)
     return () => setMounted(false)
@@ -54,14 +54,13 @@ const LayoutBase = props => {
     <div id="stack-theme-root" className="w-full min-h-screen bg-[#f6f6f6] dark:bg-[#1a191f] text-gray-900 antialiased p-4 transition-colors duration-300">
       <div className="max-w-6xl mx-auto relative flex flex-col md:flex-row gap-6 items-start justify-start w-full">
         
-        {/* 左侧卡片固定栏：由大骨架唯一控制，绝不多渲染 */}
+        {/* 左侧固定边栏：全站生命周期里有且仅有一个 */}
         <div id="stack-left-sidebar" className="w-full md:w-[280px] shrink-0 md:sticky md:top-4 z-30">
           <SideBar {...props} />
         </div>
 
-        {/* 右侧主内容区 */}
+        {/* 右侧自适应主内容区 */}
         <main id="stack-main-content" className="flex-1 min-w-0 w-full space-y-6 z-10">
-          {/* ⚡ 防注入锁 2：只有完全挂载成功，才注入当前子页面的内容碎片 */}
           {mounted ? children : (
             <div className="animate-pulse w-full h-40 bg-gray-50 dark:bg-zinc-800 rounded-3xl" />
           )}
@@ -74,12 +73,12 @@ const LayoutBase = props => {
 
 /**
  * 首页
+ * ⚡ 核心修复：去掉了包裹的 <LayoutBase>，只输出首页核心区块
  */
 const LayoutIndex = props => {
   const { posts, allPosts } = props 
 
   return (
-    // ⚡ 防注入锁 3：加入唯一 key 容器隔离
     <div key="stack-layout-index" className="w-full space-y-6">
       {/* 创作热力图卡片 */}
       <StackHeatmap allPosts={allPosts || posts} />
@@ -108,6 +107,7 @@ const LayoutPostList = props => {
 
 /**
  * 搜索页
+ * ⚡ 核心修复：去掉内部的 <LayoutBase>
  */
 const LayoutSearch = props => {
   const { keyword } = props
@@ -146,6 +146,7 @@ const LayoutSearch = props => {
 
 /**
  * 归档页
+ * ⚡ 核心修复：去掉内部的 <LayoutBase>
  */
 const LayoutArchive = props => {
   const { archivePosts } = props
@@ -167,7 +168,8 @@ const LayoutArchive = props => {
 }
 
 /**
- * 文章详情页（Journal 路由）
+ * 文章详情页
+ * ⚡ 核心修复：去掉内部的 <LayoutBase>
  */
 const LayoutSlug = props => {
   const { post, lock, validPassword } = props
@@ -190,7 +192,6 @@ const LayoutSlug = props => {
   }, [post])
 
   return (
-    // ⚡ 防注入锁 4：利用动态文章 ID 进行精准物理替换，隔绝子页面的残留
     <div key={`stack-slug-${post?.id || router.asPath}`} className='w-full lg:hover:shadow rounded-3xl p-6 bg-white dark:bg-[#26252c] shadow-sm article'>
       {lock && <ArticleLock validPassword={validPassword} />}
 
@@ -252,6 +253,7 @@ const Layout404 = props => {
 
 /**
  * 分类列表页
+ * ⚡ 核心修复：去掉内部的 <LayoutBase>
  */
 const LayoutCategoryIndex = props => {
   const { categoryOptions } = props
@@ -278,6 +280,7 @@ const LayoutCategoryIndex = props => {
 
 /**
  * 标签列表页
+ * ⚡ 核心修复：去掉内部的 <LayoutBase>
  */
 const LayoutTagIndex = props => {
   const { tagOptions } = props
