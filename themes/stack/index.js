@@ -9,7 +9,7 @@ import { Transition } from '@headlessui/react'
 import dynamic from 'next/dynamic'
 import SmartLink from '@/components/SmartLink'
 import { useRouter } from 'next/router'
-import { createContext, useContext, useEffect } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import ArticleAdjacent from './components/ArticleAdjacent'
 import ArticleCopyright from './components/ArticleCopyright'
 import { ArticleLock } from './components/ArticleLock'
@@ -30,48 +30,63 @@ const AlgoliaSearchModal = dynamic(
   { ssr: false }
 )
 
-// 主题全局状态
 const ThemeGlobalHexo = createContext()
 export const useHexoGlobal = () => useContext(ThemeGlobalHexo)
 
 /**
- * 🌟 核心基础容器（解决 LayoutBase missing 报错）
- * 框架强制要求导出此组件，这里作为纯净的外层大容器包裹
+ * 🌟 核心骨架隔离：完全控制生命周期，物理清除二次注入与残留
  */
 const LayoutBase = props => {
   const { children } = props
+  const router = useRouter()
+  const [mounted, setMounted] = useState(false)
+
+  // ⚡ 防注入锁 1：建立严格的客户端单例挂载机制。
+  // 切换任意路由（asPath）时强制刷新，抹除旧页面 DOM 残留，防止旧侧边栏或重复主页未被销毁
+  useEffect(() => {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [router.asPath])
+
+  if (!children) return null
+
   return (
-    <div className="min-h-screen bg-[#f6f6f6] dark:bg-[#1a191f] text-gray-900 antialiased p-4 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto relative flex flex-col md:flex-row gap-6 items-start">
-        {/* 精准控制：在这里统一引入一次侧边栏，所有子页面就不需要单独嵌套了，绝无重影 */}
-        <div className="w-full md:w-[280px] shrink-0 md:sticky md:top-4 z-20">
+    <div id="stack-theme-root" className="w-full min-h-screen bg-[#f6f6f6] dark:bg-[#1a191f] text-gray-900 antialiased p-4 transition-colors duration-300">
+      <div className="max-w-6xl mx-auto relative flex flex-col md:flex-row gap-6 items-start justify-start w-full">
+        
+        {/* 左侧卡片固定栏：由大骨架唯一控制，绝不多渲染 */}
+        <div id="stack-left-sidebar" className="w-full md:w-[280px] shrink-0 md:sticky md:top-4 z-30">
           <SideBar {...props} />
         </div>
-        
-        {/* 内容区域 */}
-        <main className="flex-1 min-w-0 w-full space-y-6 z-10">
-          {children}
+
+        {/* 右侧主内容区 */}
+        <main id="stack-main-content" className="flex-1 min-w-0 w-full space-y-6 z-10">
+          {/* ⚡ 防注入锁 2：只有完全挂载成功，才注入当前子页面的内容碎片 */}
+          {mounted ? children : (
+            <div className="animate-pulse w-full h-40 bg-gray-50 dark:bg-zinc-800 rounded-3xl" />
+          )}
         </main>
+
       </div>
     </div>
   )
 }
 
 /**
- * 首页：大圆角热力图卡片 + 文章列表流
- * ⚡ 修复：去掉外层多余的 <LayoutBase>，改用 <> 包裹，防止二次嵌套引发双栏和多主页
+ * 首页
  */
 const LayoutIndex = props => {
   const { posts, allPosts } = props 
 
   return (
-    <>
+    // ⚡ 防注入锁 3：加入唯一 key 容器隔离
+    <div key="stack-layout-index" className="w-full space-y-6">
       {/* 创作热力图卡片 */}
       <StackHeatmap allPosts={allPosts || posts} />
 
       {/* 文章列表卡片流 */}
       <LayoutPostList {...props} />
-    </>
+    </div>
   )
 }
 
@@ -93,7 +108,6 @@ const LayoutPostList = props => {
 
 /**
  * 搜索页
- * ⚡ 修复：去掉外层多余的 <LayoutBase>
  */
 const LayoutSearch = props => {
   const { keyword } = props
@@ -114,7 +128,7 @@ const LayoutSearch = props => {
   })
 
   return (
-    <div className='w-full'>
+    <div key="stack-layout-search" className='w-full'>
       {!currentSearch ? (
         <SearchNav {...props} />
       ) : (
@@ -132,12 +146,11 @@ const LayoutSearch = props => {
 
 /**
  * 归档页
- * ⚡ 修复：去掉外层多余的 <LayoutBase>
  */
 const LayoutArchive = props => {
   const { archivePosts } = props
   return (
-    <div className='w-full'>
+    <div key="stack-layout-archive" className='w-full'>
       <Card className='w-full'>
         <div className='mb-10 pb-20 bg-white md:p-12 p-3 min-h-full dark:bg-[#26252c] rounded-3xl shadow-sm'>
           {Object.keys(archivePosts).map(archiveTitle => (
@@ -154,8 +167,7 @@ const LayoutArchive = props => {
 }
 
 /**
- * 文章详情页
- * ⚡ 修复：去掉外层多余的 <LayoutBase>
+ * 文章详情页（Journal 路由）
  */
 const LayoutSlug = props => {
   const { post, lock, validPassword } = props
@@ -178,7 +190,8 @@ const LayoutSlug = props => {
   }, [post])
 
   return (
-    <div className='w-full lg:hover:shadow rounded-3xl p-6 bg-white dark:bg-[#26252c] shadow-sm article'>
+    // ⚡ 防注入锁 4：利用动态文章 ID 进行精准物理替换，隔绝子页面的残留
+    <div key={`stack-slug-${post?.id || router.asPath}`} className='w-full lg:hover:shadow rounded-3xl p-6 bg-white dark:bg-[#26252c] shadow-sm article'>
       {lock && <ArticleLock validPassword={validPassword} />}
 
       {!lock && post && (
@@ -188,21 +201,21 @@ const LayoutSlug = props => {
               {post && <NotionPage post={post} />}
             </section>
 
-              <ShareBar post={post} />
-              {post?.type === 'Post' && (
-                <div className="mt-8 space-y-6">
-                  <ArticleCopyright {...props} />
-                  <ArticleRecommend {...props} />
-                  <ArticleAdjacent {...props} />
-                </div>
-              )}
-            </article>
+            <ShareBar post={post} />
+            {post?.type === 'Post' && (
+              <div className="mt-8 space-y-6">
+                <ArticleCopyright {...props} />
+                <ArticleRecommend {...props} />
+                <ArticleAdjacent {...props} />
+              </div>
+            )}
+          </article>
 
-            <div className='pt-6 duration-200 overflow-x-auto bg-white dark:bg-[#26252c]'>
-              <Comment frontMatter={post} />
-            </div>
+          <div className='pt-6 duration-200 overflow-x-auto bg-white dark:bg-[#26252c]'>
+            <Comment frontMatter={post} />
           </div>
-        )}
+        </div>
+      )}
     </div>
   )
 }
@@ -226,7 +239,7 @@ const Layout404 = props => {
   })
 
   return (
-    <div className='text-black w-full h-screen text-center justify-center content-center items-center flex flex-col'>
+    <div key="stack-layout-404" className='text-black w-full h-screen text-center justify-center content-center items-center flex flex-col'>
       <div className='dark:text-gray-200'>
         <h2 className='inline-block border-r-2 border-gray-600 mr-2 px-3 py-2 align-top'>404</h2>
         <div className='inline-block text-left h-32 leading-10 items-center'>
@@ -239,13 +252,12 @@ const Layout404 = props => {
 
 /**
  * 分类列表页
- * ⚡ 修复：去掉外层多余的 <LayoutBase>
  */
 const LayoutCategoryIndex = props => {
   const { categoryOptions } = props
   const { locale } = useGlobal()
   return (
-    <div className='w-full'>
+    <div key="stack-layout-category" className='w-full'>
       <Card className='w-full min-h-screen bg-white dark:bg-[#26252c] rounded-3xl p-6 shadow-sm'>
         <div className='dark:text-gray-200 mb-5 font-bold'>
           <i className='mr-2 fas fa-th' /> {locale.COMMON.CATEGORY}:
@@ -266,13 +278,12 @@ const LayoutCategoryIndex = props => {
 
 /**
  * 标签列表页
- * ⚡ 修复：去掉外层多余的 <LayoutBase>
  */
 const LayoutTagIndex = props => {
   const { tagOptions } = props
   const { locale } = useGlobal()
   return (
-    <div className='w-full'>
+    <div key="stack-layout-tags" className='w-full'>
       <Card className='w-full bg-white dark:bg-[#26252c] rounded-3xl p-6 shadow-sm'>
         <div className='dark:text-gray-200 mb-5 font-bold'>
           <i className='mr-2 fas fa-tag' /> {locale.COMMON.TAGS}:
@@ -289,7 +300,6 @@ const LayoutTagIndex = props => {
   )
 }
 
-// ⚡ 终极修复：顺应 NotionNext 的底层设计，重新在最后一层导出 LayoutBase 绕过 Vercel 编译拦截
 export {
   Layout404,
   LayoutArchive,
