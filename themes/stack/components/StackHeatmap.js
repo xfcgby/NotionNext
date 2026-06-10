@@ -4,41 +4,60 @@ import 'react-calendar-heatmap/dist/styles.css'
 import { format } from 'date-fns'
 
 export default function StackHeatmap({ allPosts }) {
-  // 数据清洗：转为热力图标准格式
+  
+  // 💡 统一提取文章日期的辅助函数，确保所有逻辑认准同一个时间
+  const getPostDate = (post) => {
+    // 依次读取：真实发布日期 -> 关联开始日期 -> 创建日期
+    return post?.publishDay || post?.date?.start_date || post?.createdTime
+  }
+
+  // 1. 数据清洗：转为热力图标准格式
   const heatmapData = useMemo(() => {
     const counts = {}
     allPosts?.forEach(post => {
-      const dateStr = post?.publishDate || post?.date?.start_date || post?.lastEditedTime
+      const dateStr = getPostDate(post) // 👈 统一使用上面的精准时间
       if (dateStr) {
         try {
           const formattedDate = format(new Date(dateStr), 'yyyy-MM-dd')
           counts[formattedDate] = (counts[formattedDate] || 0) + 1
-        } catch (e) {}
+        } catch (e) {
+          // 防止脏数据导致整站崩溃
+        }
       }
     })
     return Object.keys(counts).map(date => ({ date, count: counts[date] }))
   }, [allPosts])
 
-  // 自动提取有文章的所有年份
+  // 2. 自动提取有文章的所有年份
   const years = useMemo(() => {
     const yearSet = new Set()
     allPosts?.forEach(post => {
-      const dateStr = post?.publishDate || post?.date?.start_date
-      if (dateStr) yearSet.add(new Date(dateStr).getFullYear())
+      const dateStr = getPostDate(post)
+      if (dateStr) {
+        try {
+          yearSet.add(new Date(dateStr).getFullYear())
+        } catch (e) {}
+      }
     })
+    // 兜底：如果没文章，默认展示今年
     if (yearSet.size === 0) yearSet.add(new Date().getFullYear())
+    // 年份从大到小排序
     return Array.from(yearSet).sort((a, b) => b - a)
   }, [allPosts])
 
+  // 当前选中的年份（默认展示最新的一年）
   const [selectedYear, setSelectedYear] = useState(years[0])
 
+  // 3. 计算每个年份的文章总数（用于按钮上的数字角标展示）
   const countsByYear = useMemo(() => {
     const map = {}
     allPosts?.forEach(post => {
-      const dateStr = post?.publishDate || post?.date?.start_date
+      const dateStr = getPostDate(post)
       if (dateStr) {
-        const y = new Date(dateStr).getFullYear()
-        map[y] = (map[y] || 0) + 1
+        try {
+          const y = new Date(dateStr).getFullYear()
+          map[y] = (map[y] || 0) + 1
+        } catch (e) {}
       }
     })
     return map
