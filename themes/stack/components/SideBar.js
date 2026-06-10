@@ -1,9 +1,11 @@
 import LazyImage from '@/components/LazyImage'
 import { siteConfig } from '@/lib/config'
 import { useRouter } from 'next/router'
-import MenuGroupCard from './MenuGroupCard'
-import { MenuListSide } from './MenuListSide'
-import Footer from './Footer'// 👈 自动引入 NotionNext 全局自带的页脚落款组件
+import Footer from './Footer'
+
+// ⚡ 完美兼容：直接借用 NotionNext 全局自带的基础组件，避免复制漏掉文件导致 Vercel 报错
+import MenuGroupCard from '@/themes/hexo/components/MenuGroupCard'
+import { MenuListSide } from '@/themes/hexo/components/MenuListSide'
 
 /**
  * Stack 侧边栏卡片
@@ -42,7 +44,7 @@ const SideBar = props => {
         </div>
       </div>
 
-      {/* 👇 下半部分：回归并优雅对齐你的版权落款 */}
+      {/* 下半部分：回归并优雅对齐你的版权落款 */}
       <div className='mt-8 pt-6 border-t border-gray-100 dark:border-zinc-700/50 text-xs text-gray-400 dark:text-zinc-500'>
         <Footer {...props} />
       </div>
