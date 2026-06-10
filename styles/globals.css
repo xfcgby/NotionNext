@@ -297,4 +297,72 @@ img {
   }
   @keyframes l1 {
   0% {background-position: right}
+  }
+    /* ==========================================================================
+   Stack 主题专属组件样式补丁 (热力图 + 侧边栏菜单)
+   ========================================================================== */
+
+/* 1. 热力图基础样式与白天模式 */
+.heatmap-empty {
+  fill: #e5e7eb !important; /* 白天模式：没有更新时的浅灰色方块 */
+}
+
+/* 2. 热力图暗黑模式适配 */
+.dark .heatmap-empty {
+  fill: #1e1d24 !important; /* 暗黑模式：没有更新时的暗色方块 */
+}
+
+/* 3. 薰衣草紫渐变色阶（根据当天创作的文章篇数由浅入深） */
+.heatmap-scale-1 { fill: #e8e5f5 !important; }
+.heatmap-scale-2 { fill: #c7bee5 !important; }
+.heatmap-scale-3 { fill: #a595d2 !important; }
+.heatmap-scale-4 { fill: #826cbd !important; /* 创作爆发期：最饱和的Stack主题紫 */ }
+
+/* 4. 热力图上的星期、月份等文本字体与颜色 */
+.react-calendar-heatmap text {
+  font-size: 9px !important;
+  fill: #94a3b8 !important;
+}
+
+/* 5. 隐藏横向滚动条的通用辅助类（防止热力图在移动端把网页撑宽） */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important; /* Safari and Chrome */
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+/* 6. 强制让原本 hexo 的横向菜单在 Stack 的窄侧边栏里纵向精致排列 */
+#side-bar .stack-menu-wrapper nav {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.37rem !important;
+}
+
+#side-bar .stack-menu-wrapper nav a {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.85rem !important;
+  padding: 0.65rem 1rem !important;
+  border-radius: 1rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: #4b5563 !important; /* 默认灰字 */
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* 7. 暗黑模式下的菜单文字颜色 */
+.dark #side-bar .stack-menu-wrapper nav a {
+  color: #d1d5db !important;
+}
+
+/* 8. 菜单悬浮到上面时，产生淡淡的薰衣草紫微光背景 */
+#side-bar .stack-menu-wrapper nav a:hover {
+  background-color: rgba(130, 108, 189, 0.08) !important;
+  color: #826cbd !important;
+}
+.dark #side-bar .stack-menu-wrapper nav a:hover {
+  background-color: rgba(130, 108, 189, 0.15) !important;
+  color: #c7bee5 !important;
 }
