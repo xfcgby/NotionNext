@@ -56,23 +56,28 @@ export const useHexoGlobal = () => useContext(ThemeGlobalHexo)
  * 基础布局：改为 Stack 双栏响应式架构
  * 左侧固定边栏，右侧主内容区
  */
+/**
+ * 基础布局：改为纯净的 Stack 双栏响应式架构
+ * 彻底拔除旧 Hexo 的全屏 Hero、吸顶 Header 状态计算残留
+ */
 const LayoutBase = props => {
-  const { children, slotTop } = props
+  const { children } = props
 
   return (
-    // 外层指定干净的白天/暗黑模式背景色，引入 16px (p-4) 的边距
+    // 物理切断一切与原主题全局包裹器的关联，使用最纯粹、无脚本干扰的静态双栏布局
     <div className="min-h-screen bg-[#f6f6f6] dark:bg-[#1a191f] text-gray-900 antialiased p-4 transition-colors duration-300">
       <div className="max-w-7xl mx-auto relative flex flex-col md:flex-row gap-6">
         
-        {/* 1. 左侧固定卡片边栏 */}
-        <SideBar {...props} />
+        {/* 1. 左侧固定卡片边栏 (内部自带常驻头像与统计) */}
+        <div className="w-full md:w-[280px] shrink-0">
+          <div className="md:sticky md:top-4">
+            <SideBar {...props} />
+          </div>
+        </div>
 
-        {/* 2. 右侧主内容区（通过 md:ml-80 为固定的左侧栏留出空间） */}
-        <main className="flex-1 md:ml-80 min-w-0">
-          {/* 主区上部嵌入（如果有） */}
-          {slotTop}
-          
-          {/* 这里会自动渲染你的各个子页面内容 */}
+        {/* 2. 右侧主内容区 */}
+        <main className="flex-1 min-w-0">
+          {/* 这里会自动且老老实实地从页面第 1 像素开始渲染你的热力图和文章，绝无任何动态高度计算 */}
           {children}
         </main>
 
@@ -91,14 +96,14 @@ const LayoutBase = props => {
  * 首页：大圆角热力图卡片 + 文章列表流
  */
 const LayoutIndex = props => {
-  const { allPosts } = props // 提取 Notion 发送给前端的全量文章数据
+  // 🌟 第一步：在大括号里加上 posts，把这个“箱子”交到程序手里
+  const { posts, allPosts } = props 
 
   return (
     <div className="w-full space-y-6">
-      {/* 💥 精确插塞：带年份切换的创作热力图卡片 */}
-      <StackHeatmap allPosts={allPosts} />
+      {/* 🌟 第二步：替换这一行，让热力图聪明地用 allPosts 或 posts 兜底 */}
+      <StackHeatmap allPosts={allPosts || posts} />
 
-      {/* 原本的文章列表卡片流 */}
       <LayoutPostList {...props} />
     </div>
   )
