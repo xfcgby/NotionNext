@@ -22,10 +22,8 @@ import SearchNav from './components/SearchNav'
 import SlotBar from './components/SlotBar'
 import TagItemMini from './components/TagItemMini'
 import CONFIG from './config'
-import StackHeatmap from './components/StackHeatmap'
-
-// 🌟 修复：将 SideBar 移到所有业务逻辑和 const 的最上方，彻底解决 unreachable 错误
 import SideBar from './components/SideBar'
+import StackHeatmap from './components/StackHeatmap'
 
 const AlgoliaSearchModal = dynamic(
   () => import('@/components/AlgoliaSearchModal'),
@@ -37,23 +35,22 @@ const ThemeGlobalHexo = createContext()
 export const useHexoGlobal = () => useContext(ThemeGlobalHexo)
 
 /**
- * 🌟 Stack 双栏骨架（内部组件，不对外导出）
- * 自适应铺满，物理阻断任何第三栏挂件
+ * 🌟 核心骨架：纯净且绝对锁定的 Stack 双栏响应式骨架
  */
 const LayoutBase = props => {
   const { children } = props
 
   return (
-    <div className="min-h-screen bg-[#f6f6f6] dark:bg-[#1a191f] text-gray-900 antialiased p-4 transition-colors duration-300 overflow-x-hidden">
+    <div className="min-h-screen bg-[#f6f6f6] dark:bg-[#1a191f] text-gray-900 antialiased p-4 transition-colors duration-300">
       <div className="max-w-6xl mx-auto relative flex flex-col md:flex-row gap-6 items-start">
         
         {/* 1. 左侧固定卡片边栏 (固定 280px 宽度) */}
-        <div className="w-full md:w-[280px] shrink-0 md:sticky md:top-4 z-20">
+        <div className="w-full md:w-[280px] shrink-0 md:sticky md:top-4 z-10">
           <SideBar {...props} />
         </div>
 
         {/* 2. 右侧主内容区 */}
-        <main className="flex-1 min-w-0 w-full space-y-6 z-10">
+        <main className="flex-1 min-w-0 w-full space-y-6">
           {children}
         </main>
 
@@ -298,7 +295,7 @@ const LayoutTagIndex = props => {
   )
 }
 
-// ⚡ 核心修复：在这里拿掉了 LayoutBase，防止被 NotionNext 框架误认为是独立页面导致重影和多出首页
+// ⚡ 核心修复：这里不再导出 LayoutBase，保证 Vercel 编译正常，消除多出主页和双重边栏的 Bug
 export {
   Layout404,
   LayoutArchive,
