@@ -3,7 +3,7 @@ import { siteConfig } from '@/lib/config'
 import { useRouter } from 'next/router'
 import MenuGroupCard from './MenuGroupCard'
 import { MenuListSide } from './MenuListSide'
-import Footer from '@/components/Footer' // 👈 自动引入 NotionNext 全局自带的页脚落款组件
+import Footer from './Footer'// 👈 自动引入 NotionNext 全局自带的页脚落款组件
 
 /**
  * Stack 侧边栏卡片
