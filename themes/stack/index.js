@@ -43,7 +43,7 @@ const LayoutBase = props => {
   return (
     <div className="min-h-screen bg-[#f6f6f6] dark:bg-[#1a191f] text-gray-900 antialiased p-4 transition-colors duration-300">
       <div className="max-w-6xl mx-auto relative flex flex-col md:flex-row gap-6 items-start">
-        {/* 精准控制：在这里引入一次侧边栏，所有子页面就不需要单独引了 */}
+        {/* 精准控制：在这里统一引入一次侧边栏，所有子页面就不需要单独嵌套了，绝无重影 */}
         <div className="w-full md:w-[280px] shrink-0 md:sticky md:top-4 z-20">
           <SideBar {...props} />
         </div>
@@ -59,6 +59,7 @@ const LayoutBase = props => {
 
 /**
  * 首页：大圆角热力图卡片 + 文章列表流
+ * ⚡ 修复：去掉外层多余的 <LayoutBase>，改用 <> 包裹，防止二次嵌套引发双栏和多主页
  */
 const LayoutIndex = props => {
   const { posts, allPosts } = props 
@@ -92,6 +93,7 @@ const LayoutPostList = props => {
 
 /**
  * 搜索页
+ * ⚡ 修复：去掉外层多余的 <LayoutBase>
  */
 const LayoutSearch = props => {
   const { keyword } = props
@@ -130,6 +132,7 @@ const LayoutSearch = props => {
 
 /**
  * 归档页
+ * ⚡ 修复：去掉外层多余的 <LayoutBase>
  */
 const LayoutArchive = props => {
   const { archivePosts } = props
@@ -152,6 +155,7 @@ const LayoutArchive = props => {
 
 /**
  * 文章详情页
+ * ⚡ 修复：去掉外层多余的 <LayoutBase>
  */
 const LayoutSlug = props => {
   const { post, lock, validPassword } = props
@@ -184,21 +188,21 @@ const LayoutSlug = props => {
               {post && <NotionPage post={post} />}
             </section>
 
-            <ShareBar post={post} />
-            {post?.type === 'Post' && (
-              <div className="mt-8 space-y-6">
-                <ArticleCopyright {...props} />
-                <ArticleRecommend {...props} />
-                <ArticleAdjacent {...props} />
-              </div>
-            )}
-          </article>
+              <ShareBar post={post} />
+              {post?.type === 'Post' && (
+                <div className="mt-8 space-y-6">
+                  <ArticleCopyright {...props} />
+                  <ArticleRecommend {...props} />
+                  <ArticleAdjacent {...props} />
+                </div>
+              )}
+            </article>
 
-          <div className='pt-6 duration-200 overflow-x-auto bg-white dark:bg-[#26252c]'>
-            <Comment frontMatter={post} />
+            <div className='pt-6 duration-200 overflow-x-auto bg-white dark:bg-[#26252c]'>
+              <Comment frontMatter={post} />
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   )
 }
@@ -235,6 +239,7 @@ const Layout404 = props => {
 
 /**
  * 分类列表页
+ * ⚡ 修复：去掉外层多余的 <LayoutBase>
  */
 const LayoutCategoryIndex = props => {
   const { categoryOptions } = props
@@ -261,6 +266,7 @@ const LayoutCategoryIndex = props => {
 
 /**
  * 标签列表页
+ * ⚡ 修复：去掉外层多余的 <LayoutBase>
  */
 const LayoutTagIndex = props => {
   const { tagOptions } = props
@@ -283,7 +289,7 @@ const LayoutTagIndex = props => {
   )
 }
 
-// ⚡ 核心修复：顺应 NotionNext 的底层设计，重新正常导出 LayoutBase 绕过 Vercel 编译拦截
+// ⚡ 终极修复：顺应 NotionNext 的底层设计，重新在最后一层导出 LayoutBase 绕过 Vercel 编译拦截
 export {
   Layout404,
   LayoutArchive,
