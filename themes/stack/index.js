@@ -27,43 +27,42 @@ import StackHeatmap from './components/StackHeatmap'
 const ThemeGlobalHexo = createContext()
 export const useHexoGlobal = () => useContext(ThemeGlobalHexo)
 
-const NotionNextAlgoliaModal = dynamic(() => import('@/components/AlgoliaSearchModal'), { ssr: false })
+const AlgoliaSearchModal = dynamic(
+  () => import('@/components/AlgoliaSearchModal'),
+  { ssr: false }
+)
 
 /**
- * 🌟 Stack 物理双栏绝对核心外壳（极简固态直接渲染版）
+ * 🌟 Stack 物理双栏全新固态直接渲染外壳 (彻底根治 Transition 锁死白屏)
  */
 const LayoutBase = props => {
   const { children } = props
-  const router = useRouter()
   const [mounted, setMounted] = useState(false)
-  // 🌓 引入核心全局切换变量
   const { isDarkMode, toggleTheme } = useGlobal()
 
   useEffect(() => {
     setMounted(true)
-    return () => setMounted(false)
-  }, [router.asPath])
+  }, [])
 
   return (
-    <div 
-      id="theme-stack-root" 
-      // 💡 实时绑定 dark 状态，点击月牙立刻切换
+    <div
+      id='theme-stack-root'
       className={`${siteConfig('FONT_STYLE')} ${isDarkMode ? 'dark bg-[#1a191f] text-gray-100' : 'bg-[#f6f6f6] text-gray-900'} w-full min-h-screen antialiased p-4 transition-colors duration-300 relative`}
     >
       <div className="max-w-6xl mx-auto relative flex flex-col md:flex-row gap-6 items-start justify-start w-full">
         
-        {/* 左侧独立物理侧边栏 */}
+        {/* 左侧绝对独立物理侧边栏 - 自带满血复活的数据统计与大小写不敏感公告 */}
         <div id="stack-left-sidebar" className="w-full md:w-[280px] shrink-0 md:sticky md:top-4 z-30">
           <SideBar {...props} />
         </div>
 
-        {/* 右侧自适应主内容区：直接渲染 children，决不通过生命周期拦截导致白屏 */}
+        {/* 右侧自适应主内容区 - 剥离所有 Transition 动画锁，直接、安全地渲染内容，永久免疫白屏 */}
         <main id="stack-main-content" className="flex-1 min-w-0 w-full space-y-6 z-10">
           {children}
         </main>
       </div>
 
-      {/* 🌓 右下角月牙悬浮球 */}
+      {/* 🌓 专属悬浮月牙球：一键无缝无死角变黑/变白 */}
       {mounted && (
         <button
           onClick={toggleTheme}
@@ -74,7 +73,8 @@ const LayoutBase = props => {
         </button>
       )}
 
-      <div className="hidden"><NotionNextAlgoliaModal {...props} /></div>
+      {/* 全文搜索隐藏挂载点 */}
+      <div className="hidden"><AlgoliaSearchModal {...props} /></div>
     </div>
   )
 }
