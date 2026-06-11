@@ -5,7 +5,7 @@ import ShareBar from '@/components/ShareBar'
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import { isBrowser } from '@/lib/utils'
-import dynamic from 'next/dynamic'
+import dynamic from 'dynamic'
 import SmartLink from '@/components/SmartLink'
 import { useRouter } from 'next/router'
 import { createContext, useContext, useEffect, useState } from 'react'
@@ -110,15 +110,23 @@ const LayoutSearch = props => {
   const currentSearch = keyword || router?.query?.s
 
   useEffect(() => {
-    if (currentSearch) {
-      replaceSearchResult({
-        doms: document.getElementsByClassName('replace'),
-        search: keyword,
-        target: {
-          element: 'span',
-          className: 'text-red-500 border-b border-dashed'
+    // 🛡️ 防御：只有在确信有搜索词且处于浏览器环境时才执行原生 DOM 修改，并加入异常捕获
+    if (currentSearch && isBrowser) {
+      try {
+        const targets = document.getElementsByClassName('replace')
+        if (targets && targets.length > 0) {
+          replaceSearchResult({
+            doms: targets,
+            search: keyword,
+            target: {
+              element: 'span',
+              className: 'text-red-500 border-b border-dashed'
+            }
+          })
         }
-      })
+      } catch (e) {
+        console.error('搜索高亮脚本执行失败，已自动拦截防止整页白屏:', e)
+      }
     }
   }, [currentSearch, keyword])
 
@@ -181,9 +189,12 @@ const LayoutSlug = props => {
     }
   }, [post, router, waiting404])
 
+  // 💡 修复：使用绝对稳定的唯一 Key，彻底避免 Next.js 路由变化瞬间强行销毁/重绘未就绪 DOM 导致的运行时崩溃白屏
+  const slugKey = post?.id ? `stack-slug-${post.id}` : 'stack-slug-loading'
+
   return (
     <LayoutBase {...props}>
-      <div key={`stack-slug-${post?.id || router.asPath}`} className='w-full lg:hover:shadow rounded-3xl p-6 bg-white dark:bg-[#26252c] shadow-sm article'>
+      <div key={slugKey} className='w-full lg:hover:shadow rounded-3xl p-6 bg-white dark:bg-[#26252c] shadow-sm article'>
         {lock && <ArticleLock validPassword={validPassword} />}
 
         {!lock && post && (
@@ -257,7 +268,7 @@ const LayoutCategoryIndex = props => {
             {categoryOptions?.map(category => (
               <SmartLink key={category.name} href={`/category/${category.name}`} passHref legacyBehavior>
                 <div className='duration-300 dark:hover:text-white px-4 py-2 cursor-pointer bg-gray-50 dark:bg-zinc-800 rounded-xl hover:text-purple-500 transition-colors'>
-                  <i className='mr-2 fas fa-folder' /> {category.name} ({category.count})
+                  <i className='mr-2 fas fa-folder' /> {category.name} ({category.count || 0})
                 </div>
               </SmartLink>
             ))}
