@@ -1,51 +1,55 @@
 import LazyImage from '@/components/LazyImage'
 import { siteConfig } from '@/lib/config'
 import { useRouter } from 'next/router'
+import MenuGroupCard from './MenuGroupCard'
+import { MenuListSide } from './MenuListSide'
 import Footer from './Footer'
 
-// ⚡ 完美兼容：直接借用 NotionNext 全局自带的基础组件，避免复制漏掉文件导致 Vercel 报错
-import MenuGroupCard from '@/themes/hexo/components/MenuGroupCard'
-import { MenuListSide } from '@/themes/hexo/components/MenuListSide'
-
 /**
- * Stack 侧边栏卡片
+ * 🍃 极简呼吸感 Stack 侧边栏 (防报错全清空版)
  */
 const SideBar = props => {
-  const { siteInfo } = props
+  const { siteInfo, notice } = props
   const router = useRouter()
+
   return (
-    <div id='side-bar' className="bg-white dark:bg-zinc-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-zinc-700/50 flex flex-col justify-between min-h-[calc(100vh-4rem)]">
+    <div id='side-bar' className="bg-white dark:bg-zinc-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-zinc-700/50 flex flex-col justify-between min-h-[calc(100vh-4rem)] transition-all duration-300">
       
-      {/* 上半部分：头像 + 统计卡片 + 侧拉导航菜单 */}
       <div>
-        <div className='w-full flex justify-center mb-4'>
-          <div>
-            <div
-              onClick={() => {
-                router.push('/')
-              }}
-              className='justify-center items-center flex hover:rotate-45 py-4 hover:scale-105 dark:text-gray-100 transform duration-200 cursor-pointer'>
-              {/* 头像 */}
-              <LazyImage
-                src={siteInfo?.icon}
-                className='rounded-full'
-                width={80}
-                alt={siteConfig('AUTHOR')}
-              />
-            </div>
-            {/* 包含文章、分类、标签计数的总览卡片 */}
-            <MenuGroupCard {...props} />
+        {/* 1. 头像与数据统计 */}
+        <div className='w-full flex flex-col items-center mb-4'>
+          <div
+            onClick={() => router.push('/')}
+            className='justify-center items-center flex hover:scale-105 transform duration-200 cursor-pointer py-4'
+          >
+            <LazyImage
+              src={siteInfo?.icon}
+              className='rounded-full'
+              width={80}
+              height={80}
+              alt={siteConfig('AUTHOR')}
+            />
           </div>
+          <MenuGroupCard {...props} />
         </div>
 
-        {/* 侧拉抽屉的菜单项 */}
+        {/* 📢 2. 极简无背景公告（如果 Notion 后台配了公告就显示，没配就不占地方） */}
+        {notice?.summary && (
+          <div className="mt-4 px-2 text-center">
+            <p className="text-xs text-gray-400 dark:text-zinc-500 leading-relaxed italic">
+              "{notice.summary}"
+            </p>
+          </div>
+        )}
+
+        {/* 3. 导航菜单 */}
         <div className="stack-menu-wrapper mt-6">
           <MenuListSide {...props} />
         </div>
       </div>
 
-      {/* 下半部分：回归并优雅对齐你的版权落款 */}
-      <div className='mt-8 pt-6 border-t border-gray-100 dark:border-zinc-700/50 text-xs text-gray-400 dark:text-zinc-500'>
+      {/* 4. 页脚版权落款 */}
+      <div className="mt-8 pt-4 border-t border-gray-100 dark:border-zinc-700/50 text-center text-xs">
         <Footer {...props} />
       </div>
 
