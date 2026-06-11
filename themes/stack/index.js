@@ -5,8 +5,7 @@ import ShareBar from '@/components/ShareBar'
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import { isBrowser } from '@/lib/utils'
-import { Transition } from '@headlessui/react'
-import dynamic from 'next/dynamic'
+import dynamic from 'dynamic'
 import SmartLink from '@/components/SmartLink'
 import { useRouter } from 'next/router'
 import { createContext, useContext, useEffect, useState } from 'react'
@@ -25,24 +24,18 @@ import CONFIG from './config'
 import SideBar from './components/SideBar'
 import StackHeatmap from './components/StackHeatmap'
 
-const AlgoliaSearchModal = dynamic(
-  () => import('@/components/AlgoliaSearchModal'),
-  { ssr: false }
-)
-
 const ThemeGlobalHexo = createContext()
 export const useHexoGlobal = () => useContext(ThemeGlobalHexo)
 
 /**
- * 🌟 核心独苗大骨架：全站唯一的边栏与主区布局容器
- * 坚决不在这层以外的任何地方重复调用 LayoutBase
+ * 🌟 核心大骨架：全站唯一的外壳，把夜间模式单独剥离到右下角悬浮球
  */
 const LayoutBase = props => {
   const { children } = props
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
+  const { isDarkMode, toggleTheme } = useGlobal()
 
-  // 挂载锁：防止 Next.js 服务端快照水合冲突
   useEffect(() => {
     setMounted(true)
     return () => setMounted(false)
@@ -51,7 +44,7 @@ const LayoutBase = props => {
   if (!children) return null
 
   return (
-    <div id="stack-theme-root" className="w-full min-h-screen bg-[#f6f6f6] dark:bg-[#1a191f] text-gray-900 antialiased p-4 transition-colors duration-300">
+    <div id="stack-theme-root" className="w-full min-h-screen bg-[#f6f6f6] dark:bg-[#1a191f] text-gray-900 antialiased p-4 transition-colors duration-300 relative">
       <div className="max-w-6xl mx-auto relative flex flex-col md:flex-row gap-6 items-start justify-start w-full">
         
         {/* 左侧固定边栏：全站生命周期里有且仅有一个 */}
@@ -65,25 +58,32 @@ const LayoutBase = props => {
             <div className="animate-pulse w-full h-40 bg-gray-50 dark:bg-zinc-800 rounded-3xl" />
           )}
         </main>
-
       </div>
+
+      {/* 🌓 独立右下角悬浮球：只有在客户端完全挂载后才渲染，百分百防打包报错 */}
+      {mounted && (
+        <button
+          onClick={toggleTheme}
+          className="fixed bottom-6 right-6 z-50 p-3.5 rounded-full bg-white dark:bg-[#26252c] text-gray-600 dark:text-gray-300 shadow-lg border border-gray-100 dark:border-zinc-800 hover:scale-110 active:scale-95 transition-all duration-200 group"
+          title="切换主题"
+        >
+          <i className={`fas ${isDarkMode ? 'fa-sun text-amber-500' : 'fa-moon text-indigo-500'} text-lg transition-transform duration-300 group-hover:rotate-12`} />
+        </button>
+      )}
+
     </div>
   )
 }
 
 /**
  * 首页
- * ⚡ 核心修复：去掉了包裹的 <LayoutBase>，只输出首页核心区块
  */
 const LayoutIndex = props => {
   const { posts, allPosts } = props 
 
   return (
     <div key="stack-layout-index" className="w-full space-y-6">
-      {/* 创作热力图卡片 */}
       <StackHeatmap allPosts={allPosts || posts} />
-
-      {/* 文章列表卡片流 */}
       <LayoutPostList {...props} />
     </div>
   )
@@ -107,7 +107,6 @@ const LayoutPostList = props => {
 
 /**
  * 搜索页
- * ⚡ 核心修复：去掉内部的 <LayoutBase>
  */
 const LayoutSearch = props => {
   const { keyword } = props
@@ -146,7 +145,6 @@ const LayoutSearch = props => {
 
 /**
  * 归档页
- * ⚡ 核心修复：去掉内部的 <LayoutBase>
  */
 const LayoutArchive = props => {
   const { archivePosts } = props
@@ -169,7 +167,6 @@ const LayoutArchive = props => {
 
 /**
  * 文章详情页
- * ⚡ 核心修复：去掉内部的 <LayoutBase>
  */
 const LayoutSlug = props => {
   const { post, lock, validPassword } = props
@@ -182,9 +179,7 @@ const LayoutSlug = props => {
         if (isBrowser) {
           const article = document.querySelector('#article-wrapper #notion-article')
           if (!article) {
-            router.push('/404').then(() => {
-              console.warn('找不到页面', router.asPath)
-            })
+            router.push('/404')
           }
         }
       }, waiting404)
@@ -253,7 +248,6 @@ const Layout404 = props => {
 
 /**
  * 分类列表页
- * ⚡ 核心修复：去掉内部的 <LayoutBase>
  */
 const LayoutCategoryIndex = props => {
   const { categoryOptions } = props
@@ -280,7 +274,6 @@ const LayoutCategoryIndex = props => {
 
 /**
  * 标签列表页
- * ⚡ 核心修复：去掉内部的 <LayoutBase>
  */
 const LayoutTagIndex = props => {
   const { tagOptions } = props
