@@ -30,44 +30,40 @@ export const useHexoGlobal = () => useContext(ThemeGlobalHexo)
 const NotionNextAlgoliaModal = dynamic(() => import('@/components/AlgoliaSearchModal'), { ssr: false })
 
 /**
- * 🌟 Stack 物理双栏绝对核心外壳
+ * 🌟 Stack 物理双栏绝对核心外壳（极简固态直接渲染版）
  */
 const LayoutBase = props => {
   const { children } = props
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
-  // 🌓 接入框架原生最核心的夜间模式控制变量
-  const { isDarkMode, toggleTheme, onLoading } = useGlobal()
+  // 🌓 引入核心全局切换变量
+  const { isDarkMode, toggleTheme } = useGlobal()
 
   useEffect(() => {
     setMounted(true)
     return () => setMounted(false)
   }, [router.asPath])
 
-  if (!children) return null
-
   return (
     <div 
       id="theme-stack-root" 
-      // 💡 核心修复：在这里强制同步系统的 isDarkMode，点击月牙立刻实现全站变黑/变白
-      className={`${siteConfig('FONT_STYLE')} ${isDarkMode ? 'dark bg-[#1a191f]' : 'bg-[#f6f6f6]'} w-full min-h-screen text-gray-900 dark:text-gray-100 antialiased p-4 transition-colors duration-300 relative`}
+      // 💡 实时绑定 dark 状态，点击月牙立刻切换
+      className={`${siteConfig('FONT_STYLE')} ${isDarkMode ? 'dark bg-[#1a191f] text-gray-100' : 'bg-[#f6f6f6] text-gray-900'} w-full min-h-screen antialiased p-4 transition-colors duration-300 relative`}
     >
       <div className="max-w-6xl mx-auto relative flex flex-col md:flex-row gap-6 items-start justify-start w-full">
         
-        {/* 左侧极致物理侧边栏 */}
+        {/* 左侧独立物理侧边栏 */}
         <div id="stack-left-sidebar" className="w-full md:w-[280px] shrink-0 md:sticky md:top-4 z-30">
           <SideBar {...props} />
         </div>
 
-        {/* 右侧自适应主内容区 */}
+        {/* 右侧自适应主内容区：直接渲染 children，决不通过生命周期拦截导致白屏 */}
         <main id="stack-main-content" className="flex-1 min-w-0 w-full space-y-6 z-10">
-          {mounted ? children : (
-            <div className="animate-pulse w-full h-40 bg-gray-50 dark:bg-zinc-800 rounded-3xl" />
-          )}
+          {children}
         </main>
       </div>
 
-      {/* 🌓 悬浮月牙球：百分百接管系统的切换功能 */}
+      {/* 🌓 右下角月牙悬浮球 */}
       {mounted && (
         <button
           onClick={toggleTheme}
@@ -124,7 +120,7 @@ const LayoutSearch = props => {
         }
       })
     }
-  })
+  }, [currentSearch, keyword])
 
   return (
     <LayoutBase {...props}>
@@ -152,7 +148,7 @@ const LayoutArchive = props => {
       <div key="stack-layout-archive" className='w-full'>
         <Card className='w-full'>
           <div className='mb-10 pb-20 bg-white md:p-12 p-3 min-h-full dark:bg-[#26252c] rounded-3xl shadow-sm'>
-            {Object.keys(archivePosts).map(archiveTitle => (
+            {Object.keys(archivePosts || {}).map(archiveTitle => (
               <BlogPostArchive
                 key={archiveTitle}
                 posts={archivePosts[archiveTitle]}
@@ -173,7 +169,7 @@ const LayoutSlug = props => {
   
   useEffect(() => {
     if (!post) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         if (isBrowser) {
           const article = document.querySelector('#article-wrapper #notion-article')
           if (!article) {
@@ -181,8 +177,9 @@ const LayoutSlug = props => {
           }
         }
       }, waiting404)
+      return () => clearTimeout(timer)
     }
-  }, [post])
+  }, [post, router, waiting404])
 
   return (
     <LayoutBase {...props}>
@@ -221,7 +218,7 @@ const Layout404 = props => {
   const { locale } = useGlobal()
   
   useEffect(() => {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       if (isBrowser) {
         const article = document.querySelector('#article-wrapper #notion-article')
         if (!article) {
@@ -229,7 +226,8 @@ const Layout404 = props => {
         }
       }
     }, 3000)
-  })
+    return () => clearTimeout(timer)
+  }, [router])
 
   return (
     <LayoutBase {...props}>
@@ -281,7 +279,7 @@ const LayoutTagIndex = props => {
             <i className='mr-2 fas fa-tag' /> {locale.COMMON.TAGS}:
           </div>
           <div id='tags-list' className='duration-200 flex flex-wrap gap-2'>
-            {tagOptions.map(tag => (
+            {tagOptions?.map(tag => (
               <div key={tag.name}>
                 <TagItemMini key={tag.name} tag={tag} />
               </div>
