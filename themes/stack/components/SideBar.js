@@ -6,13 +6,13 @@ import { MenuListSide } from './MenuListSide'
 import Footer from './Footer'
 
 /**
- * 🍃 Stack 主题终极物理侧边栏（数据自给自足 + 全局防御 + 精准公告版）
+ * 🍃 Stack 主题物理侧边栏（安全加强版）
  */
 const SideBar = props => {
   const { siteInfo, notice, allPosts, posts } = props
   const router = useRouter()
 
-  // 🧩 1. 公告栏数据智能拦截（大小写不敏感）
+  // 🧩 1. 公告栏数据智能拦截
   const allAvailableData = allPosts || posts || []
   const runtimeNoticeItem = Array.isArray(allAvailableData) 
     ? allAvailableData.find(post => {
@@ -25,8 +25,7 @@ const SideBar = props => {
   const notionNoticeSummary = runtimeNoticeItem?.summary || runtimeNoticeItem?.title
   const noticeText = notice?.summary || notionNoticeSummary || '欢迎来到我的数字化花园，这里记录技术、思绪与创作。'
 
-  // 📊 2. 核心黑科技：在组件内部直接为 MenuGroupCard 实时计算和组装数据统计
-  // 过滤出所有真正的文章（Type 为 Post 且已发布）
+  // 📊 2. 核心计算：提取并统计分类与标签（加入 count 防御）
   const validPosts = Array.isArray(allAvailableData)
     ? allAvailableData.filter(post => {
         const typeStr = Array.isArray(post?.type) ? post.type[0] : post?.type
@@ -35,41 +34,38 @@ const SideBar = props => {
       })
     : []
 
-  // 实时去重计算分类（Category）数量
-  const categories = new Set()
+  // 统计分类数量
+  const categoryMap = {}
+  // 统计标签数量
+  const tagMap = {}
+
   validPosts.forEach(post => {
+    // 分类处理
     if (post?.category) {
-      if (Array.isArray(post.category)) {
-        post.category.forEach(c => categories.add(c))
-      } else {
-        categories.add(post.category)
-      }
+      const cats = Array.isArray(post.category) ? post.category : [post.category]
+      cats.forEach(c => {
+        if (c) categoryMap[c] = (categoryMap[c] || 0) + 1
+      })
     }
-  })
-
-  // 实时去重计算标签（Tag）数量
-  const tags = new Set()
-  validPosts.forEach(post => {
+    // 标签处理
     if (post?.tags) {
-      if (Array.isArray(post.tags)) {
-        post.tags.forEach(t => tags.add(t))
-      } else {
-        tags.add(post.tags)
-      }
+      const tgs = Array.isArray(post.tags) ? post.tags : [post.tags]
+      tgs.forEach(t => {
+        if (t) tagMap[t] = (tagMap[t] || 0) + 1
+      })
     }
   })
 
-  // 🛠️ 重新组装一个绝对不会断流、饱满的 props 传给原版的统计卡片
+  // 重新包装，确保格式与 NotionNext 官方格式彻底对齐（必须有 name 和 count）
   const patchedProps = {
     ...props,
     postCount: validPosts.length,
-    categoryOptions: Array.from(categories).map(name => ({ name })),
-    tagOptions: Array.from(tags).map(name => ({ name }))
+    categoryOptions: Object.keys(categoryMap).map(name => ({ name, count: categoryMap[name] })),
+    tagOptions: Object.keys(tagMap).map(name => ({ name, count: tagMap[name] }))
   }
 
   return (
     <div id='side-bar' className="bg-white dark:bg-[#26252c] rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col justify-between min-h-[calc(100vh-4rem)] transition-all duration-300 w-full">
-      
       <div>
         {/* 1. 头像与满血复活的数据统计卡片 */}
         <div className='w-full flex flex-col items-center mb-4'>
@@ -85,11 +81,10 @@ const SideBar = props => {
               alt={siteConfig('AUTHOR') || 'Avatar'}
             />
           </div>
-          {/* 💡 这里传入我们刚刚在前端实时算好的、金刚不坏的数据源 */}
           <MenuGroupCard {...patchedProps} />
         </div>
 
-        {/* 📢 2. 公告栏卡片：精准展现 Notion 后台写的内容 */}
+        {/* 📢 2. 公告栏卡片 */}
         <div className="mt-4 p-4 rounded-2xl bg-gradient-to-br from-purple-50/60 to-indigo-50/40 dark:from-zinc-800/60 dark:to-zinc-800/30 border border-purple-100/50 dark:border-zinc-700/30 transition-all">
           <div className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-2 mb-1.5">
             <i className="fas fa-bullhorn animate-pulse" />
@@ -110,7 +105,6 @@ const SideBar = props => {
       <div className="mt-8 pt-4 border-t border-gray-50 dark:border-zinc-800 text-center text-xs text-gray-400">
         <Footer {...props} />
       </div>
-
     </div>
   )
 }
