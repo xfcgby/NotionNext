@@ -5,7 +5,7 @@ import ShareBar from '@/components/ShareBar'
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import { isBrowser } from '@/lib/utils'
-import dynamic from 'next/dynamic' // 👈 ⚡ 满血保留：Next.js 官方标准动态加载组件
+import dynamic from 'next/dynamic'
 import SmartLink from '@/components/SmartLink'
 import { useRouter } from 'next/router'
 import { createContext, useContext, useEffect, useState } from 'react'
@@ -24,20 +24,14 @@ import CONFIG from './config'
 import SideBar from './components/SideBar'
 import StackHeatmap from './components/StackHeatmap'
 
-// ==========================================================================
-// 🚀 【第三方挂件专属配置区】
-// 如果你有自定义的第三方组件（例如在 components/CustomWidget.js），可以像下面这样解开注释动态引入：
-// const CustomWidget = dynamic(() => import('@/components/CustomWidget'), { ssr: false })
-// ==========================================================================
-
-// 💡 显式调用一次用作兜底，彻底消除编辑器的 “unused import” 警告，同时确保打包通过
-const NotionNextAlgoliaModal = dynamic(() => import('@/components/AlgoliaSearchModal'), { ssr: false })
-
 const ThemeGlobalHexo = createContext()
 export const useHexoGlobal = () => useContext(ThemeGlobalHexo)
 
+// 💡 显式引入第三方算法挂件，消除警告
+const NotionNextAlgoliaModal = dynamic(() => import('@/components/AlgoliaSearchModal'), { ssr: false })
+
 /**
- * 🌟 核心大骨架：全站唯一的外壳，把夜间模式单独剥离到右下角悬浮球
+ * 🌟 核心大骨架：全站唯一的左右物理双栏主外壳
  */
 const LayoutBase = props => {
   const { children } = props
@@ -56,7 +50,7 @@ const LayoutBase = props => {
     <div id="stack-theme-root" className="w-full min-h-screen bg-[#f6f6f6] dark:bg-[#1a191f] text-gray-900 antialiased p-4 transition-colors duration-300 relative">
       <div className="max-w-6xl mx-auto relative flex flex-col md:flex-row gap-6 items-start justify-start w-full">
         
-        {/* 左侧固定边栏 */}
+        {/* 左侧统一侧边栏：传入全量 props，保证菜单和公告随时能拿到数据 */}
         <div id="stack-left-sidebar" className="w-full md:w-[280px] shrink-0 md:sticky md:top-4 z-30">
           <SideBar {...props} />
         </div>
@@ -69,7 +63,7 @@ const LayoutBase = props => {
         </main>
       </div>
 
-      {/* 🌓 独立右下角悬浮球 */}
+      {/* 🌓 右下角悬浮球 */}
       {mounted && (
         <button
           onClick={toggleTheme}
@@ -80,29 +74,28 @@ const LayoutBase = props => {
         </button>
       )}
 
-      {/* 🧩 【隐藏的全局算法组件挂载点】用于确保 Algolia 动态加载机制合法常驻，防编译报错 */}
       <div className="hidden"><NotionNextAlgoliaModal {...props} /></div>
-
     </div>
   )
 }
 
 /**
- * 首页
+ * 首页：包裹外壳
  */
 const LayoutIndex = props => {
   const { posts, allPosts } = props 
-
   return (
-    <div key="stack-layout-index" className="w-full space-y-6">
-      <StackHeatmap allPosts={allPosts || posts} />
-      <LayoutPostList {...props} />
-    </div>
+    <LayoutBase {...props}>
+      <div key="stack-layout-index" className="w-full space-y-6">
+        <StackHeatmap allPosts={allPosts || posts} />
+        <LayoutPostList {...props} />
+      </div>
+    </LayoutBase>
   )
 }
 
 /**
- * 博客列表
+ * 博客文章列表流
  */
 const LayoutPostList = props => {
   return (
@@ -118,7 +111,7 @@ const LayoutPostList = props => {
 }
 
 /**
- * 搜索页
+ * 搜索页：包裹外壳
  */
 const LayoutSearch = props => {
   const { keyword } = props
@@ -139,46 +132,50 @@ const LayoutSearch = props => {
   })
 
   return (
-    <div key="stack-layout-search" className='w-full'>
-      {!currentSearch ? (
-        <SearchNav {...props} />
-      ) : (
-        <div id='posts-wrapper'>
-          {siteConfig('POST_LIST_STYLE') === 'page' ? (
-            <BlogPostListPage {...props} />
-          ) : (
-            <BlogPostListScroll {...props} />
-          )}
-        </div>
-      )}
-    </div>
+    <LayoutBase {...props}>
+      <div key="stack-layout-search" className='w-full'>
+        {!currentSearch ? (
+          <SearchNav {...props} />
+        ) : (
+          <div id='posts-wrapper'>
+            {siteConfig('POST_LIST_STYLE') === 'page' ? (
+              <BlogPostListPage {...props} />
+            ) : (
+              <BlogPostListScroll {...props} />
+            )}
+          </div>
+        )}
+      </div>
+    </LayoutBase>
   )
 }
 
 /**
- * 归档页
+ * 归档页：包裹外壳
  */
 const LayoutArchive = props => {
   const { archivePosts } = props
   return (
-    <div key="stack-layout-archive" className='w-full'>
-      <Card className='w-full'>
-        <div className='mb-10 pb-20 bg-white md:p-12 p-3 min-h-full dark:bg-[#26252c] rounded-3xl shadow-sm'>
-          {Object.keys(archivePosts).map(archiveTitle => (
-            <BlogPostArchive
-              key={archiveTitle}
-              posts={archivePosts[archiveTitle]}
-              archiveTitle={archiveTitle}
-            />
-          ))}
-        </div>
-      </Card>
-    </div>
+    <LayoutBase {...props}>
+      <div key="stack-layout-archive" className='w-full'>
+        <Card className='w-full'>
+          <div className='mb-10 pb-20 bg-white md:p-12 p-3 min-h-full dark:bg-[#26252c] rounded-3xl shadow-sm'>
+            {Object.keys(archivePosts).map(archiveTitle => (
+              <BlogPostArchive
+                key={archiveTitle}
+                posts={archivePosts[archiveTitle]}
+                archiveTitle={archiveTitle}
+              />
+            ))}
+          </div>
+        </Card>
+      </div>
+    </LayoutBase>
   )
 }
 
 /**
- * 文章详情页
+ * 文章详情页：包裹外壳
  */
 const LayoutSlug = props => {
   const { post, lock, validPassword } = props
@@ -199,37 +196,39 @@ const LayoutSlug = props => {
   }, [post])
 
   return (
-    <div key={`stack-slug-${post?.id || router.asPath}`} className='w-full lg:hover:shadow rounded-3xl p-6 bg-white dark:bg-[#26252c] shadow-sm article'>
-      {lock && <ArticleLock validPassword={validPassword} />}
+    <LayoutBase {...props}>
+      <div key={`stack-slug-${post?.id || router.asPath}`} className='w-full lg:hover:shadow rounded-3xl p-6 bg-white dark:bg-[#26252c] shadow-sm article'>
+        {lock && <ArticleLock validPassword={validPassword} />}
 
-      {!lock && post && (
-        <div className='overflow-x-auto flex-grow mx-auto md:w-full'>
-          <article id='article-wrapper' className='subpixel-antialiased overflow-y-hidden'>
-            <section className='justify-center mx-auto max-w-2xl lg:max-w-full'>
-              {post && <NotionPage post={post} />}
-            </section>
+        {!lock && post && (
+          <div className='overflow-x-auto flex-grow mx-auto md:w-full'>
+            <article id='article-wrapper' className='subpixel-antialiased overflow-y-hidden'>
+              <section className='justify-center mx-auto max-w-2xl lg:max-w-full'>
+                {post && <NotionPage post={post} />}
+              </section>
 
-            <ShareBar post={post} />
-            {post?.type === 'Post' && (
-              <div className="mt-8 space-y-6">
-                <ArticleCopyright {...props} />
-                <ArticleRecommend {...props} />
-                <ArticleAdjacent {...props} />
-              </div>
-            )}
-          </article>
+              <ShareBar post={post} />
+              {post?.type === 'Post' && (
+                <div className="mt-8 space-y-6">
+                  <ArticleCopyright {...props} />
+                  <ArticleRecommend {...props} />
+                  <ArticleAdjacent {...props} />
+                </div>
+              )}
+            </article>
 
-          <div className='pt-6 duration-200 overflow-x-auto bg-white dark:bg-[#26252c]'>
-            <Comment frontMatter={post} />
+            <div className='pt-6 duration-200 overflow-x-auto bg-white dark:bg-[#26252c]'>
+              <Comment frontMatter={post} />
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </LayoutBase>
   )
 }
 
 /**
- * 404页面
+ * 404页面：包裹外壳
  */
 const Layout404 = props => {
   const router = useRouter()
@@ -247,64 +246,70 @@ const Layout404 = props => {
   })
 
   return (
-    <div key="stack-layout-404" className='text-black w-full h-screen text-center justify-center content-center items-center flex flex-col'>
-      <div className='dark:text-gray-200'>
-        <h2 className='inline-block border-r-2 border-gray-600 mr-2 px-3 py-2 align-top'>404</h2>
-        <div className='inline-block text-left h-32 leading-10 items-center'>
-          <h2 className='m-0 p-0'>{locale.COMMON.NOT_FOUND}</h2>
+    <LayoutBase {...props}>
+      <div key="stack-layout-404" className='text-black w-full h-screen text-center justify-center content-center items-center flex flex-col'>
+        <div className='dark:text-gray-200'>
+          <h2 className='inline-block border-r-2 border-gray-600 mr-2 px-3 py-2 align-top'>404</h2>
+          <div className='inline-block text-left h-32 leading-10 items-center'>
+            <h2 className='m-0 p-0'>{locale.COMMON.NOT_FOUND}</h2>
+          </div>
         </div>
       </div>
-    </div>
+    </LayoutBase>
   )
 }
 
 /**
- * 分类列表页
+ * 分类列表页：包裹外壳
  */
 const LayoutCategoryIndex = props => {
   const { categoryOptions } = props
   const { locale } = useGlobal()
   return (
-    <div key="stack-layout-category" className='w-full'>
-      <Card className='w-full min-h-screen bg-white dark:bg-[#26252c] rounded-3xl p-6 shadow-sm'>
-        <div className='dark:text-gray-200 mb-5 font-bold'>
-          <i className='mr-2 fas fa-th' /> {locale.COMMON.CATEGORY}:
-        </div>
-        <div id='category-list' className='duration-200 flex flex-wrap gap-4'>
-          {categoryOptions?.map(category => (
-            <SmartLink key={category.name} href={`/category/${category.name}`} passHref legacyBehavior>
-              <div className='duration-300 dark:hover:text-white px-4 py-2 cursor-pointer bg-gray-50 dark:bg-zinc-800 rounded-xl hover:text-purple-500 transition-colors'>
-                <i className='mr-2 fas fa-folder' /> {category.name} ({category.count})
-              </div>
-            </SmartLink>
-          ))}
-        </div>
-      </Card>
-    </div>
+    <LayoutBase {...props}>
+      <div key="stack-layout-category" className='w-full'>
+        <Card className='w-full min-h-screen bg-white dark:bg-[#26252c] rounded-3xl p-6 shadow-sm'>
+          <div className='dark:text-gray-200 mb-5 font-bold'>
+            <i className='mr-2 fas fa-th' /> {locale.COMMON.CATEGORY}:
+          </div>
+          <div id='category-list' className='duration-200 flex flex-wrap gap-4'>
+            {categoryOptions?.map(category => (
+              <SmartLink key={category.name} href={`/category/${category.name}`} passHref legacyBehavior>
+                <div className='duration-300 dark:hover:text-white px-4 py-2 cursor-pointer bg-gray-50 dark:bg-zinc-800 rounded-xl hover:text-purple-500 transition-colors'>
+                  <i className='mr-2 fas fa-folder' /> {category.name} ({category.count})
+                </div>
+              </SmartLink>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </LayoutBase>
   )
 }
 
 /**
- * 标签列表页
+ * 标签列表页：包裹外壳
  */
 const LayoutTagIndex = props => {
   const { tagOptions } = props
   const { locale } = useGlobal()
   return (
-    <div key="stack-layout-tags" className='w-full'>
-      <Card className='w-full bg-white dark:bg-[#26252c] rounded-3xl p-6 shadow-sm'>
-        <div className='dark:text-gray-200 mb-5 font-bold'>
-          <i className='mr-2 fas fa-tag' /> {locale.COMMON.TAGS}:
-        </div>
-        <div id='tags-list' className='duration-200 flex flex-wrap gap-2'>
-          {tagOptions.map(tag => (
-            <div key={tag.name}>
-              <TagItemMini key={tag.name} tag={tag} />
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
+    <LayoutBase {...props}>
+      <div key="stack-layout-tags" className='w-full'>
+        <Card className='w-full bg-white dark:bg-[#26252c] rounded-3xl p-6 shadow-sm'>
+          <div className='dark:text-gray-200 mb-5 font-bold'>
+            <i className='mr-2 fas fa-tag' /> {locale.COMMON.TAGS}:
+          </div>
+          <div id='tags-list' className='duration-200 flex flex-wrap gap-2'>
+            {tagOptions.map(tag => (
+              <div key={tag.name}>
+                <TagItemMini key={tag.name} tag={tag} />
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </LayoutBase>
   )
 }
 
