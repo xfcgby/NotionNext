@@ -248,18 +248,20 @@ const MenuListSide = props => {
         </div>
 
         <div className="busuanzi_container_site_pv flex justify-between items-center transition-all hover:translate-x-0.5">
-          <span className="text-slate-500 dark:text-zinc-500 flex items-center gap-1">✨ 倾听回响 (PV)</span>
-          <span className="font-mono text-xs text-slate-700 dark:text-zinc-300">
-            <span id="busuanzi_value_site_pv" className="font-bold text-slate-900 dark:text-zinc-100 busuanzi_value_site_pv">--</span> 次
-          </span>
-        </div>
+  <span className="text-slate-500 dark:text-zinc-500 flex items-center gap-1">✨ 倾听回响 (PV)</span>
+  <span className="font-mono text-xs text-slate-700 dark:text-zinc-300 flex items-center gap-0.5">
+    <span id="busuanzi_value_site_pv" className="font-bold text-slate-900 dark:text-zinc-100 busuanzi_value_site_pv">--</span>
+    <span>次</span>
+  </span>
+</div>
 
         <div className="busuanzi_container_site_uv flex justify-between items-center transition-all hover:translate-x-0.5">
-          <span className="text-slate-500 dark:text-zinc-800 flex items-center gap-1">👥 游园人数 (UV)</span>
-          <span className="font-mono text-xs text-slate-700 dark:text-zinc-300">
-            <span id="busuanzi_value_site_uv" className="font-bold text-slate-900 dark:text-zinc-100 busuanzi_value_site_uv">--</span> 人
-          </span>
-        </div>
+  <span className="text-slate-500 dark:text-zinc-800 flex items-center gap-1">👥 游园人数 (UV)</span>
+  <span className="font-mono text-xs text-slate-700 dark:text-zinc-300 flex items-center gap-0.5">
+    <span id="busuanzi_value_site_uv" className="font-bold text-slate-900 dark:text-zinc-100 busuanzi_value_site_uv">--</span>
+    <span>人</span>
+  </span>
+</div>
 
         <div className="flex justify-between items-center transition-all hover:translate-x-0.5 pt-1 border-t border-dashed border-green-100 dark:border-zinc-800">
           <span className="text-slate-500 dark:text-zinc-500 flex items-center gap-1">📅 生态年轮跨度</span>
