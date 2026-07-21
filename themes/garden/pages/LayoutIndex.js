@@ -16,6 +16,16 @@ const LayoutIndex = props => {
   const { notice, tags, posts, weatherInfo } = props // 💡 获取父级传递的 weatherInfo
   const [activeYear, setActiveYear] = useState(new Date().getFullYear().toString())
 
+  // 💡 拼接完整的天气描述文本（包含 text 和 tip，防止单一字段遗漏“雨/雪”关键字）
+  const combinedWeatherText = useMemo(() => {
+    if (!weatherInfo) return '晴'
+    const text = weatherInfo.text || ''
+    const tip = weatherInfo.tip || ''
+    const alert = weatherInfo.alert || ''
+    // 将所有文本组合成一个完整的气象特征串，方便 GardenTree 进行精准正则匹配
+    return `${text} ${tip} ${alert}`.trim() || '晴'
+  }, [weatherInfo])
+
   const yearsList = useMemo(() => {
     if (!posts || posts.length === 0) return []
     const yearsSet = new Set()
@@ -70,12 +80,12 @@ const LayoutIndex = props => {
             />
           </div>
 
-          {/* 💡 联动 weatherText 传递 */}
+          {/* 💡 联动 combinedWeatherText 传递 */}
           <GardenTree 
             key={activeYear} 
             posts={historyAccumulatedPosts} 
             currentYear={activeYear}
-            weatherText={weatherInfo?.text || '晴'} 
+            weatherText={combinedWeatherText} 
           />
         </div>
 
