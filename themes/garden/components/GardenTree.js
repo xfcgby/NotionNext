@@ -197,7 +197,7 @@ const isRaining = /雨|rain|shower|drizzle|thunder/.test(weatherLower)
 const isSnowing = /雪|snow|sleet|ice/.test(weatherLower)
 const isWindy = /风|吹|wind|gale|breeze/.test(weatherLower)
 
-          if ((isRaining || isSnowing || isWindy) && growProgress >= 1) {
+          if ((isRaining || isSnowing || isWindy)) {
             p.loop()
           }
 
