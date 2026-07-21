@@ -165,12 +165,21 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
               p.ellipse(0, 0, 9 * sizeScale, 9 * sizeScale)
               p.fill(255, 255, 255, 180 * leafVisibility)
               p.ellipse(-1.5, -1.5, 3.5, 3.5)
-            } else if (curMonth === 12 || curMonth <= 2) {
-              p.fill(220, 235, 255, 160 * leafVisibility)
-              p.rect(-3.5, -3.5, 7 * sizeScale, 7 * sizeScale, 2)
-              p.fill(255, 255, 255, 230 * leafVisibility)
-              p.ellipse(0, 0, 4.5 * sizeScale, 4.5 * sizeScale)
-            } else {
+            }  else if (curMonth === 12 || curMonth <= 2) {
+  // ❄️ 冬季：冰晶树挂与雪淞（浅色背景增强版）
+  
+  // 1. 底层：冰蓝晶体描边/阴影（破开白色背景）
+  p.fill(160, 200, 230, 180 * leafVisibility)
+  p.rect(-4, -4, 8 * sizeScale, 8 * sizeScale, 3)
+  
+  // 2. 中层：半透明高亮冰蓝
+  p.fill(210, 235, 255, 220 * leafVisibility)
+  p.rect(-3, -3, 6 * sizeScale, 6 * sizeScale, 2)
+  
+  // 3. 顶层：带灰蓝高光的积雪核心（不再使用纯白，防止被白底融化）
+  p.fill(240, 248, 255, 255 * leafVisibility) // 极浅的冰雪亮蓝
+  p.ellipse(0, 0, 4.5 * sizeScale, 4.5 * sizeScale)
+} else {
               p.fill(cat.palette.edge[0], cat.palette.edge[1], cat.palette.edge[2], 120 * leafVisibility)
               p.ellipse(0, 0, 11 * sizeScale, 6.5 * sizeScale)
               p.fill(cat.palette.base[0], cat.palette.base[1], cat.palette.base[2], 200 * leafVisibility)
@@ -205,24 +214,38 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           const leafVisibility = Math.max(0, Math.min(1, (growProgress - 0.35) / 0.3))
 
           timeScale = p.millis() * 0.001
-          const windIntensity = isWindy ? 3.5 : (isRaining ? 1.5 : 0.6)
-          const wind = p.sin(timeScale * (isWindy ? 60 : 30)) * windIntensity
+          // ✨ ✨ 升级后：Perlin 噪声风力系统（平滑自然，绝不抽搐）
+const baseWindSpeed = isWindy ? 1.2 : 0.4
+// 使用 p.noise 产生连续平滑且带随机阵风的柔和波浪
+const noiseWind = (p.noise(timeScale * baseWindSpeed) - 0.45) * 2 
+
+// 大风时有主风向偏移（树木被吹偏），再加上随机阵风
+const windIntensity = isWindy ? 6.0 : (isRaining ? 2.5 : 1.2)
+const wind = noiseWind * windIntensity
 
           p.clear()
 
           // 天气粒子
           p.push()
           p.noStroke()
-          particles.forEach(pt => {
-            pt.y += pt.speed
-            if (isWindy || isRaining) pt.x += wind * 0.5
-            if (pt.y > p.height) { pt.y = 0; pt.x = p.random(p.width) }
-            if (isRaining) {
-              p.fill(150, 180, 220, 150); p.rect(pt.x, pt.y, 1.5, pt.speed * 2)
-            } else if (isSnowing) {
-              p.fill(255, 255, 255, 200); p.ellipse(pt.x, pt.y, pt.size, pt.size)
-            }
-          })
+          // ✨ 替换后（雨雪可视化对比度增强版）：
+particles.forEach(pt => {
+  pt.y += pt.speed
+  if (isWindy || isRaining) pt.x += wind * 0.5
+  if (pt.y > p.height) { pt.y = 0; pt.x = p.random(p.width) }
+  
+  if (isRaining) {
+    // 🌧 雨丝：深浅双重拉伸，强化湿润对比度
+    p.fill(90, 130, 180, 180) // 稍深的蔚蓝色核心
+    p.rect(pt.x, pt.y, 1.8, pt.speed * 2.5, 1)
+  } else if (isSnowing) {
+    // ❄️ 雪花：双层渲染（外层淡蓝阴影 + 内层雪白），纯白背景下依然超清晰！
+    p.fill(186, 216, 238, 160) // 外圈柔和冰蓝晕影，破开白色背景
+    p.ellipse(pt.x, pt.y, pt.size + 1.2, pt.size + 1.2)
+    p.fill(255, 255, 255, 240) // 内部晶莹纯白雪心
+    p.ellipse(pt.x, pt.y, pt.size, pt.size)
+  }
+})
           p.pop()
 
           const cumulative = getCumulativeData(year, allPosts, curMonth)
@@ -263,7 +286,20 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           for (let s = 0; s < 15; s++) {
             const ratio = s / 15
             p.strokeWeight(p.lerp(baseWeight, baseWeight * 0.55, ratio))
-            trunkHeading += p.sin(ratio * 180) * 1.8 + wind * 0.2
+            // ✨ 升级后：衰减主干每段的风力叠加，防止顶部甩尾抽搐
+for (let s = 0; s < 15; s++) {
+  const ratio = s / 15
+  p.strokeWeight(p.lerp(baseWeight, baseWeight * 0.55, ratio))
+  
+  // 越靠近树顶受风影响越大，但每次叠加量降低，避免累加过猛
+  const segWind = wind * 0.04 * ratio 
+  trunkHeading += p.sin(ratio * 180) * 1.5 + segWind
+
+  const segLen = targetTrunkLen / 15
+  const nextPos = p.createVector(currentPos.x + p.cos(trunkHeading) * segLen, currentPos.y + p.sin(trunkHeading) * segLen)
+  p.line(currentPos.x, currentPos.y, nextPos.x, nextPos.y)
+  currentPos = nextPos
+}
             const segLen = targetTrunkLen / 15
             const nextPos = p.createVector(currentPos.x + p.cos(trunkHeading) * segLen, currentPos.y + p.sin(trunkHeading) * segLen)
             p.line(currentPos.x, currentPos.y, nextPos.x, nextPos.y)
@@ -285,7 +321,8 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
               const weatherDroop = (isRaining || isSnowing) ? (isLeft ? 8 : -8) : 0
               const targetAngle = isLeft ? safeMap(i, 0, cats.length, -145, -95, false) : safeMap(i, 0, cats.length, -85, -35, false)
               
-              p.rotate(targetAngle + wind * (1 + i * 0.12) + weatherDroop)
+              // ✨ 升级后：分支受风力影响降低系数，动作更沉稳柔和
+p.rotate(targetAngle + wind * 0.65 + weatherDroop)
 
               // 主干随文章总数拉长
               const mainLen = safeMap(cat.count, 1, maxCatCount, 40, 75, true) * (isLeft ? 1.05 : 0.92) * branchProgress
