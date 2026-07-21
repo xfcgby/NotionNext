@@ -1,3 +1,4 @@
+// layouts/LayoutBase.js
 import React, { useState, useEffect, useMemo } from 'react'
 import { siteConfig } from '@/lib/config'
 import CONFIG from '../config'
@@ -16,6 +17,10 @@ import { useSpringBackground } from '../hooks/useSpringBackground'
  */
 const LayoutBase = props => {
   const [isClient, setIsClient] = useState(false)
+  
+  // 💡 持有全局天气状态
+  const [weatherInfo, setWeatherInfo] = useState({ text: '晴', alert: '' })
+
   const { children, post } = props
   const DynamicStyleGarden = useMemo(() => {
     if (!StyleModule) return null
@@ -64,10 +69,15 @@ const LayoutBase = props => {
         />
       )}
       {DynamicStyleGarden && <DynamicStyleGarden />}
-      <Header {...props} />
+      
+      {/* 💡 绑定 Weather 回调 */}
+      <Header {...props} onWeatherChange={setWeatherInfo} />
 
       <div className="flex-grow w-full pt-16">
-        {children}
+        {/* 💡 将 weatherInfo 透传给子页面 */}
+        {React.isValidElement(children)
+          ? React.cloneElement(children, { weatherInfo })
+          : children}
       </div>
 
       <RightFloatArea floatSlot={floatSlot} />
