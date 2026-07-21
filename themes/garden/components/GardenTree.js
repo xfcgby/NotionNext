@@ -233,9 +233,14 @@ const isWindy = /风|吹|wind|gale|breeze/.test(weatherLower)
             if (pt.y > p.height) { pt.y = 0; pt.x = p.random(p.width) }
             
             if (isRaining) {
-              p.fill(90, 130, 180, 180)
-              p.rect(pt.x, pt.y, 1.8, pt.speed * 2.5, 1)
-            } else if (isSnowing) {
+  // 🌧️ 1. 绘制雨丝深色主体（纯正高对比蓝）
+  p.fill(30, 100, 220, 230) 
+  p.rect(pt.x, pt.y, 2.5, pt.speed * 4.5, 1.5) // 加宽到 2.5px，长度拉长
+
+  // 🌧️ 2. 给雨丝顶部叠一层亮白水滴头（增加立体感和动态辨识度）
+  p.fill(255, 255, 255, 200)
+  p.ellipse(pt.x + 1.25, pt.y, 1.8, 1.8)
+} else if (isSnowing) {
               p.fill(186, 216, 238, 160)
               p.ellipse(pt.x, pt.y, pt.size + 1.2, pt.size + 1.2)
               p.fill(255, 255, 255, 240)
