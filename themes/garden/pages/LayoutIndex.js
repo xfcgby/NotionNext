@@ -1,3 +1,4 @@
+// layouts/LayoutIndex.js
 import React, { useState, useMemo } from 'react'
 import LayoutSideBar from '../layouts/LayoutSideBar'
 import GardenTree from '../components/GardenTree'
@@ -12,7 +13,7 @@ import PostListWrapper from '../components/PostListWrapper'
  * ==========================================================================
  */
 const LayoutIndex = props => {
-  const { notice, tags, posts } = props
+  const { notice, tags, posts, weatherInfo } = props // 💡 获取父级传递的 weatherInfo
   const [activeYear, setActiveYear] = useState(new Date().getFullYear().toString())
 
   const yearsList = useMemo(() => {
@@ -68,7 +69,14 @@ const LayoutIndex = props => {
               onChange={setActiveYear}
             />
           </div>
-          <GardenTree key={activeYear} posts={historyAccumulatedPosts} currentYear={activeYear} />
+
+          {/* 💡 联动 weatherText 传递 */}
+          <GardenTree 
+            key={activeYear} 
+            posts={historyAccumulatedPosts} 
+            currentYear={activeYear}
+            weatherText={weatherInfo?.text || '晴'} 
+          />
         </div>
 
         {/* 热力图 */}
