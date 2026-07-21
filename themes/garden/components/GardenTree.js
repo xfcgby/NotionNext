@@ -1,3 +1,4 @@
+// components/GardenTree.js
 import React, { useEffect, useRef, memo } from 'react'
 
 /**
@@ -189,9 +190,10 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
         p.draw = () => {
           const { posts: allPosts, currentYear: year, weatherText: weather, month: curMonth } = dataRef.current
           
+          // 💡 纯粹基于真实天气（weatherText）判断，不包含预警 alert
           const isRaining = weather.includes('雨')
           const isSnowing = weather.includes('雪')
-          const isWindy = weather.includes('风') || (dataRef.current.alert || '').includes('风')
+          const isWindy = weather.includes('风') || weather.includes('吹')
 
           if ((isRaining || isSnowing || isWindy) && growProgress >= 1) {
             p.loop()

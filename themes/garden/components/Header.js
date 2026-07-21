@@ -6,10 +6,11 @@ import SideBarDrawer from './SideBarDrawer'
 import MenuListSide from './MenuListSide'
 
 const Header = props => {
+  const { onWeatherChange } = props // 💡 解构获取天气变更回调
   const router = useRouter()
   const [isOpen, changeShow] = useState(false)
   const [time, setTime] = useState('')
-
+  
   // 更加硬核的综合气象状态
   const [weather, setWeather] = useState({ 
     temp: '--', 
@@ -47,14 +48,12 @@ const Header = props => {
         const temp = parseInt(current.temp_C)
         const feelLike = current.FeelsLikeC
         const humidity = current.humidity
-        const visibility = parseInt(current.visibility || '10')
-        const cloudCover = parseInt(current.cloudcover || '0')
         const windSpeed = parseInt(current.windspeedKmph || '0')
         const desc = current.weatherDesc[0].value.toLowerCase()
-
+        
         let icon = '🌤'
         let tip = '适合晒衣服'
-        let text = '晴'
+        let text = current.lang_zh ? current.lang_zh[0].value : '晴'
         let alert = ''
         let forecast = ''
 
@@ -74,13 +73,13 @@ const Header = props => {
         try {
           const hourlyForecasts = data.weather[0].hourly || []
           const currentHour = new Date().getHours()
-
+          
           // 修复深夜Bug：过滤出属于未来的最近 2 个预报时段
           const upcoming = hourlyForecasts.filter(h => {
             const hHour = parseInt(h.time) / 100
             return hHour > currentHour
           }).slice(0, 2)
-
+          
           for (let f of upcoming) {
             const fDesc = f.weatherDesc[0].value.toLowerCase()
             const timeStr = (parseInt(f.time) / 100).toString().padStart(2, '0') + ':00'
@@ -105,66 +104,43 @@ const Header = props => {
         if (desc.includes('thunder')) {
           icon = '⛈'
           tip = '雷阵雨来袭！带闪电危险，快收衣服！'
-          text = '雷阵雨'
         } else if (desc.includes('heavy rain') || desc.includes('torrential')) {
           icon = '⛈'
           tip = '暴雨倾盆！快收衣服'
-          text = '暴雨'
         } else if (desc.includes('rain') || desc.includes('drizzle') || desc.includes('shower')) {
           icon = '🌧'
           tip = '有雨，衣服赶紧收进屋'
-          text = '雨'
         } else if (desc.includes('snow') || desc.includes('sleet')) {
           icon = '❄️'
           tip = '下雪啦，防寒保暖'
-          text = '雪'
-        } 
-        // ==================== 🌫 雾/霾判定修复：加客观阈值 ====================
-        else if ((desc.includes('fog') || desc.includes('mist') || desc.includes('haze')) 
-                 && parseInt(humidity) > 90 && visibility < 1) {
-          // 真雾：高湿 + 低能见度（<1km）
+        } else if (desc.includes('fog') || desc.includes('mist') || desc.includes('haze')) {
           icon = '🌫'
           tip = '大雾弥漫，别晒衣服啦'
-          text = '雾'
-        } else if (desc.includes('fog') || desc.includes('mist') || desc.includes('haze')) {
-          // 伪雾：湿度不够高或能见度还行，降级为晴/多云
-          if (cloudCover > 60) {
-            icon = '☁️'
-            text = '阴'
-            tip = parseInt(humidity) > 80 ? '阴冷潮湿，衣服很难干' : '多云闷热，蒸发较慢'
-          } else {
-            icon = '🌤'
-            text = '晴'
-            tip = temp >= 30 && parseInt(humidity) >= 60 
-              ? '高温闷热，注意防暑，适合快干衣物' 
-              : `阳光正好，体感 ${feelLike}°C`
-          }
         } else if (desc.includes('cloudy') || desc.includes('overcast')) {
           icon = '☁️'
-          text = '阴'
           tip = parseInt(humidity) > 80 ? '阴冷潮湿，衣服很难干' : '纯阴天，蒸发较慢'
         } else {
           // 晴好天气
-          text = '晴'
           const uv = parseInt(current.uvIndex || '0')
           if (uv >= 6) {
-            icon = '☀️'
             tip = '紫外线强，黄金杀菌时机！'
           } else {
-            icon = '🌤'
             tip = `阳光正好，体感 ${feelLike}°C`
-          }
-          // 闷热修正：高温+高湿
-          if (temp >= 30 && parseInt(humidity) >= 60) {
-            text = '晴热'
-            tip = '高温闷热，注意防暑，适合快干衣物'
           }
         }
 
         setWeather({ temp: temp.toString(), text, icon, humidity, tip, alert, forecast })
+
+        // 💡 实时天气回调传出
+        if (onWeatherChange) {
+          onWeatherChange({ text, alert })
+        }
       })
       .catch(() => {
         setWeather({ temp: '26', text: '晴', icon: '☀️', humidity: '50', tip: '阳光明媚，正适合晒衣服', alert: '', forecast: '' })
+        if (onWeatherChange) {
+          onWeatherChange({ text: '晴', alert: '' })
+        }
       })
   }, [])
 
