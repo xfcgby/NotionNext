@@ -185,7 +185,7 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           
           const isRaining = weather.includes('雨')
           const isSnowing = weather.includes('雪')
-          const isWindy = weather.includes('风')
+          const isWindy = weather.includes('风') || (dataRef.current.alert || '').includes('风')
 
           if ((isRaining || isSnowing || isWindy) && growProgress >= 1) {
             p.loop()
