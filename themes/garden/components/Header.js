@@ -111,19 +111,19 @@ const Header = props => {
         const isRainByCode = rainCodes.includes(weatherCode)
 
         if (desc.includes('thunder')) {
-          icon = '⛈'; text = '雷阵雨'; tip = '雷阵雨！注意防雷'
+          icon = '⛈'; text = '雷阵雨'; tip = '雷阵雨来袭！带闪电危险，快收衣服'
         } else if (desc.includes('heavy rain') || desc.includes('torrential')) {
-          icon = '⛈'; text = '暴雨'; tip = '暴雨倾盆！'
+          icon = '⛈'; text = '暴雨'; tip = '暴雨倾盆！快收衣服'
         } else if (isRain || isRainByCode) {
-          icon = '🌧'; text = '有雨'; tip = '有雨，收衣服'
+          icon = '🌧'; text = '有雨'; tip = '有雨，衣服赶紧收进屋'
         } else if (isSnow) {
-          icon = '❄️'; text = '下雪'; tip = '下雪了，保暖'
+          icon = '❄️'; text = '下雪'; tip = '下雪啦，防寒保暖'
         } else if (desc.includes('fog') || desc.includes('mist') || desc.includes('haze')) {
-          icon = '🌫'; text = '大雾'; tip = '大雾，不宜晾晒'
+          icon = '🌫'; text = '大雾'; tip = '大雾弥漫，别晒衣服啦'
         } else if (desc.includes('partly cloudy') || desc.includes('partly_cloudy')) {
-          icon = '🌤'; text = '晴间多云'; tip = humidity > 80 ? '湿气重' : '阳光稍弱'
+          icon = '🌤'; text = '晴间多云'; tip = humidity > 80 ? '阴冷潮湿，衣服很难干' : '阳光被遮挡，晾晒稍慢'
         } else if (desc.includes('cloudy') || desc.includes('overcast')) {
-          icon = '☁️'; text = '阴'; tip = humidity > 80 ? '阴冷潮湿' : '阴天'
+          icon = '☁️'; text = '阴'; tip = humidity > 80 ? '阴冷潮湿，衣服很难干' : '纯阴天，蒸发较慢'
         } else {
           icon = '☀️'; text = '晴'; tip = `阳光正好，体感 ${feelLike}°C`
         }
