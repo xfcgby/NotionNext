@@ -106,36 +106,48 @@ const Header = props => {
 
         const isCurrentlySnowing = (desc.includes('snow') || desc.includes('sleet')) && !desc.includes('vicinity')
 
-        if (desc.includes('thunder')) {
-          icon = '⛈'
-          tip = '雷阵雨来袭！带闪电危险，快收衣服！'
-        } else if (desc.includes('heavy rain') || desc.includes('torrential')) {
-          icon = '⛈'
-          tip = '暴雨倾盆！快收衣服'
-        } else if (isCurrentlyRaining) {
-          // 🌧️ 只有当前确定在下雨，才显示雨云图标
-          icon = '🌧'
-          tip = '有雨，衣服赶紧收进屋'
-        } else if (isCurrentlySnowing) {
-          icon = '❄️'
-          tip = '下雪啦，防寒保暖'
-        } else if (desc.includes('fog') || desc.includes('mist') || desc.includes('haze')) {
-          icon = '🌫'
-          tip = '大雾弥漫，别晒衣服啦'
-        } else if (desc.includes('cloudy') || desc.includes('overcast') || desc.includes('vicinity')) {
-          // ⛅ 周边有雨或多云，统一显示多云/晴雨相间图标
-          icon = '⛅'
-          tip = parseInt(humidity) > 80 ? '阴冷潮湿，衣服很难干' : '局部多云，蒸发较慢'
-        } else {
-          // ☀️ 晴好天气
-          icon = '☀️'
-          const uv = parseInt(current.uvIndex || '0')
-          if (uv >= 6) {
-            tip = '紫外线强，黄金杀菌时机！'
-          } else {
-            tip = `阳光正好，体感 ${feelLike}°C`
-          }
-        }
+       // ==================== 🌤 3. 基础天气状态机 (图文统一) ====================
+if (desc.includes('thunder')) {
+  icon = '⛈'
+  text = '雷阵雨' // 👈 增加 text 修正
+  tip = '雷阵雨来袭！带闪电危险，快收衣服！'
+} else if (desc.includes('heavy rain') || desc.includes('torrential')) {
+  icon = '⛈'
+  text = '暴雨' // 👈 增加 text 修正
+  tip = '暴雨倾盆！快收衣服'
+} else if (isCurrentlyRaining) {
+  icon = '🌧'
+  text = '有雨' // 👈 增加 text 修正
+  tip = '有雨，衣服赶紧收进屋'
+} else if (isCurrentlySnowing) {
+  icon = '❄️'
+  text = '下雪' // 👈 增加 text 修正
+  tip = '下雪啦，防寒保暖'
+} else if (desc.includes('fog') || desc.includes('mist') || desc.includes('haze')) {
+  icon = '🌫'
+  text = '大雾' // 👈 增加 text 修正
+  tip = '大雾弥漫，别晒衣服啦'
+} else if (desc.includes('partly cloudy') || desc.includes('partly_cloudy')) {
+  // 🌤️ 重点：晴间多云 / 局部多云
+  icon = '🌤'
+  text = '晴间多云' // 👈 彻底治好“明明有云却显示晴”的错位！
+  tip = parseInt(humidity) > 80 ? '阴冷潮湿，衣服很难干' : '阳光被遮挡，晾晒稍慢'
+} else if (desc.includes('cloudy') || desc.includes('overcast')) {
+  // ☁️ 阴天 / 多云
+  icon = '☁️'
+  text = '阴' // 👈 修正为阴
+  tip = parseInt(humidity) > 80 ? '阴冷潮湿，衣服很难干' : '纯阴天，蒸发较慢'
+} else {
+  // ☀️ 纯粹的晴天
+  icon = '☀️'
+  text = '晴' // 👈 只有真·晴天时才显示“晴”
+  const uv = parseInt(current.uvIndex || '0')
+  if (uv >= 6) {
+    tip = '紫外线强，黄金杀菌时机！'
+  } else {
+    tip = `阳光正好，体感 ${feelLike}°C`
+  }
+}
 
         setWeather({ temp: temp.toString(), text, icon, humidity, tip, alert, forecast })
 
