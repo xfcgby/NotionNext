@@ -74,7 +74,7 @@ const LayoutIndex = props => {
           <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 border-b border-dashed border-slate-100 dark:border-zinc-800 pb-3">
             <div className="flex items-center space-x-2">
               <span className="text-xl">🌳</span>
-              <h2 className="font-bold text-slate-800 dark:text-zinc-200">数字生命年轮时光机</h2>
+              <h2 className="font-bold text-slate-800 dark:text-zinc-200">年轮时光机</h2>
             </div>
             <YearSelector
               years={yearsList}
