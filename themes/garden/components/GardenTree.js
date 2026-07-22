@@ -84,6 +84,14 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
     if (!containerRef.current || typeof window === 'undefined') return
     let isMounted = true
 
+    // 🛡️ 防止 HMR/StrictMode 重复创建：清理已存在的 p5 实例和 canvas
+    if (p5InstanceRef.current) {
+      try { p5InstanceRef.current.remove() } catch (e) { /* ignore */ }
+      p5InstanceRef.current = null
+    }
+    const existingCanvas = containerRef.current.querySelector('canvas')
+    if (existingCanvas) existingCanvas.remove()
+
     import('p5').then((p5Module) => {
       if (!isMounted) return
       const p5 = p5Module.default
@@ -394,11 +402,25 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
 
               // 绘制
               if (weatherConfig.type === 'rain') {
-                const alpha = p.map(pt.speed, 5, 24, 160, 255)
-                p.fill(50, 100, 170, alpha)
-                p.rect(pt.x, pt.y, pt.size, pt.speed * 3.5, 1) // 雨滴长度与速度挂钩
+                // 🌧️ 高可见度雨滴：加粗、加深、带高光
+                const alpha = p.map(pt.speed, 5, 24, 200, 255)
+                const dropWidth = pt.size * 2.2
+                const dropLen = pt.speed * 4.2
+
+                // 主体雨丝 - 深蓝，高对比度
+                p.noStroke()
+                p.fill(20, 70, 200, alpha)
+                p.rect(pt.x, pt.y, dropWidth, dropLen, 2)
+
+                // 雨滴头部高光 - 白色半透明，增加立体感
+                p.fill(200, 225, 255, alpha * 0.7)
+                p.ellipse(pt.x + dropWidth / 2, pt.y, dropWidth * 1.3, dropWidth * 1.3)
               } else if (weatherConfig.type === 'snow') {
-                p.fill(255, 255, 255, 230)
+                // ❄️ 增强雪花：带光晕
+                const glowSize = pt.size * 1.6
+                p.fill(220, 235, 255, 120)
+                p.ellipse(pt.x, pt.y, glowSize, glowSize)
+                p.fill(255, 255, 255, 240)
                 p.ellipse(pt.x, pt.y, pt.size, pt.size)
               }
             }
@@ -435,16 +457,19 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
         }
       }
 
-      const p5Instance = new p5(sketch)
-      p5InstanceRef.current = p5Instance
+      const gardenP5Instance = new p5(sketch)
+      p5InstanceRef.current = gardenP5Instance
     })
 
     return () => {
       isMounted = false
       if (p5InstanceRef.current) {
-        p5InstanceRef.current.remove()
+        try { p5InstanceRef.current.remove() } catch (e) { /* ignore */ }
         p5InstanceRef.current = null
       }
+      // 再次确保 canvas 被清理
+      const canvas = containerRef.current?.querySelector('canvas')
+      if (canvas) canvas.remove()
     }
   }, [])
 
