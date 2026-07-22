@@ -16,16 +16,18 @@ const LayoutIndex = props => {
   const { notice, tags, posts, weatherInfo } = props // 💡 获取父级传递的 weatherInfo
   const [activeYear, setActiveYear] = useState(new Date().getFullYear().toString())
 
-  // 💡 拼接完整的天气描述文本（包含 text 和 tip，防止单一字段遗漏“雨/雪”关键字）
+  // 💡 拼接完整的天气描述文本（包含 text, tip, alert）
   const combinedWeatherText = useMemo(() => {
     if (!weatherInfo) return '晴'
     const text = weatherInfo.text || ''
     const tip = weatherInfo.tip || ''
     const alert = weatherInfo.alert || ''
-    // 将所有文本组合成一个完整的气象特征串，方便 GardenTree 进行精准正则匹配
-    return `${text} ${tip} ${alert}`.trim() || '晴'
+    const combined = `${text} ${tip} ${alert}`.trim()
+    console.log('🌳 [LayoutIndex] combinedWeatherText:', combined)
+    return combined || '晴'
   }, [weatherInfo])
 
+  // 年份列表
   const yearsList = useMemo(() => {
     if (!posts || posts.length === 0) return []
     const yearsSet = new Set()
@@ -47,6 +49,7 @@ const LayoutIndex = props => {
     return Array.from(yearsSet).sort((a, b) => b - a)
   }, [posts])
 
+  // 累积到选定年份的文章
   const historyAccumulatedPosts = useMemo(() => {
     if (!posts || posts.length === 0) return []
     const targetYearNum = parseInt(activeYear)
@@ -80,12 +83,12 @@ const LayoutIndex = props => {
             />
           </div>
 
-          {/* 💡 联动 combinedWeatherText 传递 */}
-          <GardenTree 
-            key={activeYear} 
-            posts={historyAccumulatedPosts} 
+          {/* 💡 传递 combinedWeatherText 给 GardenTree */}
+          <GardenTree
+            key={activeYear}
+            posts={historyAccumulatedPosts}
             currentYear={activeYear}
-            weatherText={combinedWeatherText} 
+            weatherText={combinedWeatherText}
           />
         </div>
 
