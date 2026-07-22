@@ -84,7 +84,6 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
     if (!containerRef.current || typeof window === 'undefined') return
     let isMounted = true
 
-    // 🛡️ 防止 HMR/StrictMode 重复创建：清理已存在的 p5 实例和 canvas
     if (p5InstanceRef.current) {
       try { p5InstanceRef.current.remove() } catch (e) { /* ignore */ }
       p5InstanceRef.current = null
@@ -103,20 +102,19 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
         let categoryPlacements = []
         let groundPlants = []
         let lastDataSignature = ''
-        let particles = [] // 粒子池
+        let particles = []
 
         const flowerColors = [
           [255, 182, 193], [255, 218, 185], [253, 253, 150], [179, 219, 255], [214, 194, 255]
         ]
 
         // ============================
-        // 🌧️ 天气粒子配置解析器 (核心逻辑)
+        // 🌧️ 天气粒子配置解析器
         // ============================
         const getWeatherParticleConfig = (wText) => {
           const cfg = { count: 0, speedMin: 0, speedMax: 0, sizeMin: 0, sizeMax: 0, type: 'none', windEffect: 0.3 }
           if (!wText) return cfg
 
-          // 1. 判断雪 (优先级高)
           if (wText.includes('雪')) {
             cfg.type = 'snow'
             cfg.windEffect = 0.6
@@ -132,10 +130,9 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
             return cfg
           }
 
-          // 2. 判断雨
           if (wText.includes('雨') || wText.includes('雷') || wText.includes('阵雨')) {
             cfg.type = 'rain'
-            cfg.windEffect = 1.2 // 雨受风影响大
+            cfg.windEffect = 1.2
             if (wText.includes('暴雨') || wText.includes('特大暴雨')) {
               cfg.count = 350; cfg.speedMin = 14; cfg.speedMax = 24; cfg.sizeMin = 3; cfg.sizeMax = 6
             } else if (wText.includes('大雨')) {
@@ -143,7 +140,6 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
             } else if (wText.includes('中雨')) {
               cfg.count = 120; cfg.speedMin = 8; cfg.speedMax = 12; cfg.sizeMin = 2; cfg.sizeMax = 4
             } else {
-              // 小雨 / 阵雨
               cfg.count = 60; cfg.speedMin = 5; cfg.speedMax = 9; cfg.sizeMin = 2; cfg.sizeMax = 3
             }
             return cfg
@@ -226,15 +222,26 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
 
         p.draw = () => {
           const { posts: allPosts, currentYear: year, weatherText: weather, month: curMonth } = dataRef.current
-          
-          // 🌧️ 获取当前天气配置
-          const weatherConfig = getWeatherParticleConfig(weather)
-          const isWindy = weather.includes('风') || weather.includes('吹')
+
+          // ---------- 应急后备：如果全局 __weatherInfo 有雨/雪但 weather 为晴，则覆盖 ----------
+          let finalWeather = weather
+          if (typeof window !== 'undefined' && window.__weatherInfo && window.__weatherInfo.text) {
+            const globalText = window.__weatherInfo.text
+            if (globalText && (globalText.includes('雨') || globalText.includes('雷') || globalText.includes('雪'))) {
+              if (weather === '晴' || weather === 'undefined' || !weather || weather === '加载中') {
+                finalWeather = globalText
+              }
+            }
+          }
+
+          // 🌧️ 获取天气配置（使用 finalWeather）
+          const weatherConfig = getWeatherParticleConfig(finalWeather)
+          const isWindy = finalWeather.includes('风') || finalWeather.includes('吹')
 
           // 基础风力
           const baseWindSpeed = isWindy ? 1.2 : 0.4
           const noiseWind = (p.noise(timeScale * baseWindSpeed) - 0.45) * 2
-          const windIntensity = isWindy ? 6.0 : (weatherConfig.type === 'rain' ? 2.5 : 1.2)
+          const windIntensity = isWindy ? 6.0 : (weatherConfig.type === 'rain' ? 1.5 : 1.2)
           const wind = noiseWind * windIntensity
 
           if (!allPosts || allPosts.length === 0) {
@@ -249,7 +256,7 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           const leafVisibility = Math.max(0, Math.min(1, (growProgress - 0.35) / 0.3))
           timeScale = p.millis() * 0.001
 
-          p.clear() // 清空画布，准备重绘
+          p.clear() // 清空画布
 
           // ============================
           // 1. 绘制树体 (底层)
@@ -258,7 +265,7 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           const cats = cumulative.categories
           const totalArticles = cumulative.totalCount
 
-          // ... (地面花草绘制逻辑保持不变) ...
+          // 地面花草
           groundPlants.forEach(plant => {
             if (plant.scale < 1) plant.scale += (1 - plant.scale) * 0.08 + 0.01
             p.push()
@@ -275,7 +282,7 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
             p.pop()
           })
 
-          // 绘制树干和树枝
+          // 树干
           p.push()
           p.translate(p.width / 2, p.height - 25)
           p.stroke(215, 225, 215); p.strokeWeight(1.5); p.line(-200, 0, 200, 0)
@@ -299,6 +306,7 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           p.translate(currentPos.x, currentPos.y)
           categoryPlacements = []; hoveredCategory = null
 
+          // 分支与叶子
           if (branchProgress > 0.01 && cats.length) {
             const maxCatCount = Math.max(...cats.map(c => c.count), 1)
             for (let i = 0; i < cats.length; i++) {
@@ -309,7 +317,7 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
               const weatherDroop = (weatherConfig.type !== 'none') ? (isLeft ? 8 : -8) : 0
               const targetAngle = isLeft ? safeMap(i, 0, cats.length, -145, -95, false) : safeMap(i, 0, cats.length, -85, -35, false)
               p.rotate(targetAngle + wind * 0.65 + weatherDroop)
-              
+
               const mainLen = safeMap(cat.count, 1, maxCatCount, 40, 75, true) * (isLeft ? 1.05 : 0.92) * branchProgress
               p.noStroke(); p.fill(75, 90, 80)
               drawThickBranch(mainLen, baseWeight * 0.38, baseWeight * 0.22)
@@ -346,7 +354,7 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
                 if (remainingLeaves > 0) drawLeaves(remainingLeaves, sizeScale * 0.9, cat, curMonth, leafVisibility)
               }
 
-              // 文本标签
+              // 标签
               p.push(); p.translate(-10, 26); p.rectMode(p.CENTER); p.noStroke()
               const labelAlpha = Math.min(1, branchProgress * 1.5)
               p.fill(255, 255, 255, 220 * labelAlpha)
@@ -366,10 +374,9 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           p.pop()
 
           // ============================
-          // 2. 绘制天气粒子 (顶层，覆盖在树上)
+          // 2. 绘制天气粒子 (顶层)
           // ============================
           if (weatherConfig.count > 0) {
-            // 动态调整粒子池
             while (particles.length < weatherConfig.count) {
               particles.push({
                 x: p.random(p.width),
@@ -379,44 +386,31 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
               })
             }
 
-            // 绘制粒子
             p.push()
             p.noStroke()
             for (let i = 0; i < weatherConfig.count; i++) {
               const pt = particles[i]
-              
-              // 物理更新
               pt.y += pt.speed
               pt.x += wind * weatherConfig.windEffect
 
-              // 边界检测与重置
               if (pt.y > p.height) {
                 pt.y = -10
                 pt.x = p.random(p.width)
-                // 重置属性以适应当前天气（防止从小雨变大雨后属性不一致）
                 pt.speed = p.random(weatherConfig.speedMin, weatherConfig.speedMax)
                 pt.size = p.random(weatherConfig.sizeMin, weatherConfig.sizeMax)
               }
               if (pt.x > p.width) pt.x = 0
               if (pt.x < 0) pt.x = p.width
 
-              // 绘制
               if (weatherConfig.type === 'rain') {
-                // 🌧️ 高可见度雨滴：加粗、加深、带高光
-                const alpha = p.map(pt.speed, 5, 24, 200, 255)
-                const dropWidth = pt.size * 2.2
-                const dropLen = pt.speed * 4.2
-
-                // 主体雨丝 - 深蓝，高对比度
-                p.noStroke()
-                p.fill(20, 70, 200, alpha)
-                p.rect(pt.x, pt.y, dropWidth, dropLen, 2)
-
-                // 雨滴头部高光 - 白色半透明，增加立体感
-                p.fill(200, 225, 255, alpha * 0.7)
-                p.ellipse(pt.x + dropWidth / 2, pt.y, dropWidth * 1.3, dropWidth * 1.3)
+                const alpha = p.map(pt.speed, 5, 24, 220, 255)
+                const dropWidth = pt.size * 0.6
+                const dropLen = pt.speed * 2
+                p.fill(160, 210, 255, alpha)
+                p.rect(pt.x, pt.y, dropWidth, dropLen, 3)
+                p.fill(210, 230, 255, alpha * 0.8)
+                p.ellipse(pt.x + dropWidth / 2, pt.y, dropWidth * 1.4, dropWidth * 1.4)
               } else if (weatherConfig.type === 'snow') {
-                // ❄️ 增强雪花：带光晕
                 const glowSize = pt.size * 1.6
                 p.fill(220, 235, 255, 120)
                 p.ellipse(pt.x, pt.y, glowSize, glowSize)
@@ -426,7 +420,6 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
             }
             p.pop()
 
-            // 清理多余粒子 (防止内存泄漏)
             if (particles.length > weatherConfig.count + 50) {
               particles.splice(weatherConfig.count, particles.length - weatherConfig.count)
             }
@@ -467,7 +460,6 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
         try { p5InstanceRef.current.remove() } catch (e) { /* ignore */ }
         p5InstanceRef.current = null
       }
-      // 再次确保 canvas 被清理
       const canvas = containerRef.current?.querySelector('canvas')
       if (canvas) canvas.remove()
     }
