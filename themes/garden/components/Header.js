@@ -50,6 +50,7 @@ const Header = props => {
         const humidity = current.humidity
         const windSpeed = parseInt(current.windspeedKmph || '0')
         const desc = current.weatherDesc[0].value.toLowerCase()
+        const weatherCode = parseInt(current.weatherCode || '113', 10)
         
         let icon = '🌤'
         let tip = '适合晒衣服'
@@ -65,7 +66,6 @@ const Header = props => {
         } else if (temp <= -10) {
           alert = `💙 严寒寒潮预警：气温已跌至 ${temp}°C，谨防冻伤及管道结冰！`
         } else if (desc.includes('thunder')) {
-          // 雷雨天气安全第一，只要包含雷暴关键字直接拉响强对流预警
           alert = `⛈ 强对流天气预警：伴有雷电轰鸣，请注意防雷并迅速切断户外电源！`
         }
 
@@ -74,7 +74,6 @@ const Header = props => {
           const hourlyForecasts = data.weather[0].hourly || []
           const currentHour = new Date().getHours()
           
-          // 修复深夜Bug：过滤出属于未来的最近 2 个预报时段
           const upcoming = hourlyForecasts.filter(h => {
             const hHour = parseInt(h.time) / 100
             return hHour > currentHour
@@ -86,7 +85,6 @@ const Header = props => {
             const rainChance = parseInt(f.chanceofrain || '0')
             const snowChance = parseInt(f.chanceofsnow || '0')
 
-            // 结合天气描述与官方降水概率字段，准确率大幅提升
             if (rainChance >= 40 || fDesc.includes('rain') || fDesc.includes('drizzle') || fDesc.includes('shower') || fDesc.includes('thunder')) {
               forecast = `⏳ 晾晒提醒：预计 ${timeStr} 前后有降雨风险(概率 ${rainChance}%)，请注意收衣。`
               break
@@ -99,28 +97,38 @@ const Header = props => {
           console.error("未来预测解析失败", e)
         }
 
-        // ==================== 🌤 3. 基础天气基础状态机 ====================
-        // 【关键修复】将 thunder 置顶，防止被普通的 rain 分支提前拦截导致图标/文案降级
+        // ==================== 🌤 3. 方案 A 精准判定当前天气与图标匹配 ====================
+        // 判定当前是否正在下雨/雪（过滤掉 "vicinity" 或低概率预报）
+        const isCurrentlyRaining = (
+          (desc.includes('rain') || desc.includes('drizzle') || desc.includes('shower') || desc.includes('thunder')) &&
+          !desc.includes('vicinity') // 排除仅周边有雨
+        ) || [176, 263, 266, 293, 296, 299, 302, 305, 308, 353, 356, 359, 386, 389].includes(weatherCode)
+
+        const isCurrentlySnowing = (desc.includes('snow') || desc.includes('sleet')) && !desc.includes('vicinity')
+
         if (desc.includes('thunder')) {
           icon = '⛈'
           tip = '雷阵雨来袭！带闪电危险，快收衣服！'
         } else if (desc.includes('heavy rain') || desc.includes('torrential')) {
           icon = '⛈'
           tip = '暴雨倾盆！快收衣服'
-        } else if (desc.includes('rain') || desc.includes('drizzle') || desc.includes('shower')) {
+        } else if (isCurrentlyRaining) {
+          // 🌧️ 只有当前确定在下雨，才显示雨云图标
           icon = '🌧'
           tip = '有雨，衣服赶紧收进屋'
-        } else if (desc.includes('snow') || desc.includes('sleet')) {
+        } else if (isCurrentlySnowing) {
           icon = '❄️'
           tip = '下雪啦，防寒保暖'
         } else if (desc.includes('fog') || desc.includes('mist') || desc.includes('haze')) {
           icon = '🌫'
           tip = '大雾弥漫，别晒衣服啦'
-        } else if (desc.includes('cloudy') || desc.includes('overcast')) {
-          icon = '☁️'
-          tip = parseInt(humidity) > 80 ? '阴冷潮湿，衣服很难干' : '纯阴天，蒸发较慢'
+        } else if (desc.includes('cloudy') || desc.includes('overcast') || desc.includes('vicinity')) {
+          // ⛅ 周边有雨或多云，统一显示多云/晴雨相间图标
+          icon = '⛅'
+          tip = parseInt(humidity) > 80 ? '阴冷潮湿，衣服很难干' : '局部多云，蒸发较慢'
         } else {
-          // 晴好天气
+          // ☀️ 晴好天气
+          icon = '☀️'
           const uv = parseInt(current.uvIndex || '0')
           if (uv >= 6) {
             tip = '紫外线强，黄金杀菌时机！'
@@ -131,7 +139,7 @@ const Header = props => {
 
         setWeather({ temp: temp.toString(), text, icon, humidity, tip, alert, forecast })
 
-        // 💡 实时天气回调传出
+        // 💡 实时天气回调传出（与 Header 保持高度一致）
         if (onWeatherChange) {
           onWeatherChange({ text, alert })
         }
@@ -200,12 +208,10 @@ const Header = props => {
       {/* 侧边小叶子抽屉菜单 */}
       <SideBarDrawer isOpen={isOpen} onClose={toggleSideBarClose}>
         <div className="pt-8 px-4 flex flex-col h-[calc(100vh-4rem)] justify-between">
-          {/* 上半部分：导航菜单 */}
           <div className="space-y-6">
             <MenuListSide {...props} isMobile={true} />
           </div>
 
-          {/* 下半部分：移动端专属气象防御微缩版 */}
           <div className="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-100 dark:border-zinc-800/60">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2 text-sm font-semibold text-slate-800 dark:text-zinc-200">
