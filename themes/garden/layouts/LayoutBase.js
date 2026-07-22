@@ -21,6 +21,13 @@ const LayoutBase = props => {
   // 💡 持有全局天气状态
   const [weatherInfo, setWeatherInfo] = useState({ text: '晴', alert: '' })
 
+  // 🌧️ 同步到 window，供 GardenTree 等深层组件读取
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__weatherInfo = weatherInfo
+    }
+  }, [weatherInfo])
+
   const { children, post } = props
   const DynamicStyleGarden = useMemo(() => {
     if (!StyleModule) return null
