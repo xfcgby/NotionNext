@@ -66,6 +66,19 @@ const LayoutIndex = props => {
     })
   }, [posts, activeYear])
 
+  // 💡 过滤出需要在“新芽破土集”（首页文章列表）中展示的文章
+  // 如果 Notion 里的 ShowInList 没勾选 (false)，则在首页列表中排除，但依然保留在热力图与生命树中
+  const filteredPostsForList = useMemo(() => {
+    if (!posts || posts.length === 0) return []
+    return posts.filter(post => {
+      // 兼容 NotionNext 各种格式解析：优先读取 ShowInList，不存在则默认当作 true（显示）
+      const val = post?.ShowInList ?? post?.properties?.ShowInList
+      if (typeof val === 'boolean') return val
+      if (typeof val === 'string') return val.toLowerCase() === 'true'
+      return true
+    })
+  }, [posts])
+
   return (
     <LayoutSideBar props={props}>
       <section className="flex-1 min-w-0 space-y-6">
@@ -74,7 +87,7 @@ const LayoutIndex = props => {
           <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 border-b border-dashed border-slate-100 dark:border-zinc-800 pb-3">
             <div className="flex items-center space-x-2">
               <span className="text-xl">🌳</span>
-              <h2 className="font-bold text-slate-800 dark:text-zinc-200">年轮时光机</h2>
+              <h2 className="font-bold text-slate-800 dark:text-zinc-200">数字生命年轮时光机</h2>
             </div>
             <YearSelector
               years={yearsList}
@@ -101,9 +114,9 @@ const LayoutIndex = props => {
           <CalendarHeatmap posts={posts} currentYear={activeYear} />
         </div>
 
-        {/* 文章列表 */}
+        {/* 文章列表（传入过滤后的 posts 列表） */}
         <PostListWrapper title="新芽破土集" icon="🍃">
-          <BlogPostListPage {...props} />
+          <BlogPostListPage {...props} posts={filteredPostsForList} />
         </PostListWrapper>
       </section>
     </LayoutSideBar>
