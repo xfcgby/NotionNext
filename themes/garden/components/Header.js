@@ -5,6 +5,132 @@ import Logo from './Logo'
 import SideBarDrawer from './SideBarDrawer'
 import MenuListSide from './MenuListSide'
 
+// ============================
+// 🌦️ 天气归一化引擎（兼容 wttr 简体中文 + 英文）
+// 将 wttr.in 返回的原始描述 → GardenTree 标准粒子关键词
+// ============================
+
+/**
+ * 核心归一化函数：只负责生成 GardenTree 粒子系统能识别的标准关键词
+ * 注意优先级：雷暴/极端 > 冰雹/霰/混合降水 > 雨雪强度 > 沙尘雾霾 > 云晴
+ */
+const normalizeWeather = (rawText, weatherCode = '113') => {
+  const t = (rawText || '').toLowerCase()
+
+  // === 1. 📢 雷暴类（最高优先级！防止被后续的"雨"或"零星"提前截断）===
+  if (t.includes('雷') || t.includes('thunder')) return '雷阵雨'
+
+  // === 2. 冰雹 / 冰粒 / 霰 / 米雪 ===
+  if (t.includes('冰粒') || t.includes('冰丸') || t.includes('冰雹') || t.includes('霰') || t.includes('米雪') || t.includes('ice pellet') || t.includes('hail')) return '冰粒'
+
+  // === 3. 混合降水 ===
+  if (t.includes('雨夹雪') || t.includes('sleet')) return '雨夹雪'
+  if (t.includes('冻雨') || t.includes('冻毛毛雨') || t.includes('freezing rain') || t.includes('freezing drizzle')) return '冻雨'
+
+  // === 4. 雨 —— 暴雨/大雨级别（GardenTree: 200~350 particles）===
+  if (t.includes('特大暴雨') || t.includes('暴阵雨') || t.includes('torrential')) return '特大暴雨'
+  if (t.includes('大暴雨')) return '大暴雨'
+  if (t.includes('暴雨') || t.includes('heavy rain')) return '暴雨'
+  if (t.includes('大雨') || t.includes('大阵雨') || t.includes('强阵雨') || t.includes('强毛毛雨')) return '大雨'
+
+  // === 5. 雨 —— 中雨级别（GardenTree: 120 particles）===
+  if (t.includes('中雨') || t.includes('中阵雨') || t.includes('moderate rain') || t.includes('moderate shower')) return '中雨'
+
+  // === 6. 雨 —— 小雨级别（GardenTree: 60 particles，精确区分"零星雨"与"零星雪"）===
+  if (t.includes('小雨') || t.includes('小阵雨') || t.includes('light rain') || t.includes('light shower')) return '小雨'
+  if (t.includes('毛毛雨') || t.includes('drizzle')) return '小雨'
+  if (t.includes('阵雨') || t.includes('shower')) return '阵雨'
+  if (t.includes('雨') || t.includes('rain')) return '有雨'
+
+  // === 7. 雪 —— 暴雪级别（GardenTree: 250 particles）===
+  if (t.includes('暴雪') || t.includes('强高吹雪') || t.includes('blizzard')) return '暴雪'
+
+  // === 8. 雪 —— 大/中/小雪级别 ===
+  if (t.includes('大雪') || t.includes('大阵雪') || t.includes('heavy snow') || t.includes('heavy snow shower')) return '大雪'
+  if (t.includes('中雪') || t.includes('中阵雪') || t.includes('moderate snow') || t.includes('moderate snow shower')) return '中雪'
+  if (t.includes('小雪') || t.includes('小阵雪') || t.includes('低吹雪') || t.includes('吹雪') || t.includes('light snow') || t.includes('light snow shower')) return '小雪'
+  if (t.includes('阵雪') || t.includes('snow shower')) return '阵雪'
+  if (t.includes('雪') || t.includes('snow')) return '有雪'
+
+  // === 9. 雾/霾/沙尘/极端天气（统一归一化为低能见度粒子视效）===
+  if (t.includes('沙') || t.includes('尘') || t.includes('sand') || t.includes('dust') || t.includes('烟') || t.includes('火山灰')) return '大雾'
+  if (t.includes('雾') || t.includes('霾') || t.includes('fog') || t.includes('mist') || t.includes('haze')) return '大雾'
+
+  // === 10. 云和阴 —— 必须分开！按精确度递减 ===
+  if (t.includes('晴间多云') || t.includes('少云') || t.includes('partly cloudy')) return '晴间多云'
+  if (t.includes('多云') || t.includes('cloudy')) return '多云'
+  if (t.includes('阴') || t.includes('overcast')) return '阴'
+
+  // === 11. 晴 ===
+  if (t.includes('晴') || t.includes('sunny') || t.includes('clear')) return '晴'
+
+  // === 12. 兜底：用 weatherCode ===
+  const codeMap = {
+    '113': '晴', '116': '晴间多云', '119': '多云', '122': '阴',
+    '143': '大雾', '176': '小雨', '179': '小雪', '182': '雨夹雪',
+    '185': '冻雨', '200': '雷阵雨', '227': '小雪', '230': '暴雪',
+    '248': '大雾', '260': '大雾', '263': '小雨', '266': '小雨',
+    '281': '冻雨', '284': '冻雨', '293': '小雨', '296': '小雨',
+    '299': '中雨', '302': '中雨', '305': '大雨', '308': '大雨',
+    '311': '冻雨', '314': '冻雨', '317': '雨夹雪', '320': '雨夹雪',
+    '323': '小雪', '326': '小雪', '329': '中雪', '332': '中雪',
+    '335': '大雪', '338': '大雪', '350': '冰粒', '353': '阵雨',
+    '356': '大雨', '359': '特大暴雨', '362': '雨夹雪', '365': '雨夹雪',
+    '368': '阵雪', '371': '大雪', '374': '冰粒', '377': '冰粒',
+    '386': '雷阵雨', '389': '雷阵雨', '392': '雷阵雨', '395': '雷阵雨'
+  }
+  return codeMap[String(weatherCode)] || '晴'
+}
+
+/**
+ * 图标映射（基于归一化后的粒子关键词）
+ */
+const getWeatherIcon = (particleText) => {
+  const map = {
+    '晴': '☀️', '晴间多云': '🌤', '多云': '⛅', '阴': '☁️',
+    '大雾': '🌫',
+    '小雨': '🌧', '中雨': '🌧', '大雨': '🌧',
+    '暴雨': '⛈', '大暴雨': '⛈', '特大暴雨': '⛈', '阵雨': '🌦',
+    '有雨': '🌧', '雷阵雨': '⛈',
+    '小雪': '❄️', '中雪': '❄️', '大雪': '❄️',
+    '暴雪': '❄️', '阵雪': '🌨', '有雪': '❄️',
+    '雨夹雪': '🌨', '冻雨': '🌨', '冰粒': '🌨'
+  }
+  return map[particleText] || '🍃'
+}
+
+/**
+ * 晾晒提示语（基于归一化后的粒子关键词）
+ */
+const getWeatherTip = (particleText, humidity, feelLike) => {
+  const tips = {
+    '晴': `阳光正好，体感 ${feelLike}°C`,
+    '晴间多云': humidity > 80 ? '阴冷潮湿，衣服很难干' : '阳光被遮挡，晾晒稍慢',
+    '多云': '云量较多',
+    '阴': humidity > 80 ? '阴冷潮湿，衣服很难干' : '纯阴天，蒸发较慢',
+    '大雾': '大雾/恶劣天气，别晒衣服啦',
+    '小雨': '小雨，记得带伞',
+    '中雨': '中雨，路面湿滑',
+    '大雨': '大雨，注意避雨',
+    '暴雨': '暴雨倾盆，减少外出',
+    '大暴雨': '大暴雨，注意安全',
+    '特大暴雨': '特大暴雨，注意安全',
+    '阵雨': '阵雨来袭，快收衣服',
+    '有雨': '有雨，衣服赶紧收进屋',
+    '雷阵雨': '雷阵雨来袭！带闪电危险，快收衣服',
+    '小雪': '小雪，防寒保暖',
+    '中雪': '中雪，注意出行',
+    '大雪': '大雪，减少外出',
+    '暴雪': '暴雪，注意安全',
+    '阵雪': '阵雪',
+    '有雪': '有雪，防寒保暖',
+    '冻雨': '冻雨，路面结冰严重',
+    '雨夹雪': '雨夹雪，防寒保暖',
+    '冰粒': '冰粒，注意防滑'
+  }
+  return tips[particleText] || '天气不错'
+}
+
 const Header = props => {
   const { onWeatherChange } = props
   const router = useRouter()
@@ -37,13 +163,13 @@ const Header = props => {
 
   // 天气获取（带重试）
   const fetchWeather = () => {
-    fetch('https://wttr.in/?format=j1')
+    fetch('https://wttr.in/?format=j1&lang=zh-cn')
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
       })
       .then(data => {
-        fetchAttempts.current = 0 // 重置重试计数
+        fetchAttempts.current = 0
         const current = data.current_condition[0]
         if (!current) throw new Error('No current_condition')
 
@@ -51,89 +177,74 @@ const Header = props => {
         const feelLike = current.FeelsLikeC
         const humidity = current.humidity
         const windSpeed = parseInt(current.windspeedKmph || '0')
-        // 从 weatherDesc 取描述（可能英文也可能中文）
-        const descRaw = current.weatherDesc[0]?.value || ''
-        const desc = descRaw.toLowerCase()
+        const precipMM = parseFloat(current.precipMM || '0')
+
+        // 🆕 分离：原始描述（给用户 UI 看） vs 归一化关键词（给 GardenTree 粒子）
+        const descZh = current['lang_zh-cn']?.[0]?.value || ''
+        const descEn = current.weatherDesc?.[0]?.value || ''
+        const rawText = descZh || descEn
         const weatherCode = parseInt(current.weatherCode || '113', 10)
 
-        console.log('🌤 [Header] 原始描述:', descRaw)
-        console.log('🌤 [Header] 小写描述:', desc)
+        console.log('🌤 [Header] 原始描述:', rawText, '| Code:', weatherCode)
 
-        let icon = '🌤'
-        let tip = '适合晒衣服'
-        let text = '晴'
+        // ===== 1. 归一化 → GardenTree 粒子关键词 =====
+        let particleText = normalizeWeather(rawText, weatherCode)
+        const icon = getWeatherIcon(particleText)
+        let tip = getWeatherTip(particleText, humidity, feelLike)
+
+        // ===== 2. 风力增强标记（给粒子系统识别）=====
+        let displayText = rawText
+        if (windSpeed >= 28 && !particleText.includes('风') && !particleText.includes('吹')) {
+          particleText = `${particleText}伴大风`
+        }
+
+        // ===== 3. 灾害预警 =====
         let alert = ''
-        let forecast = ''
-
-        // ===== 灾害预警 =====
         if (windSpeed >= 40) {
           alert = `🚩 台风/强风预警：当前风速 ${windSpeed}km/h`
         } else if (temp >= 37) {
           alert = `🧡 高温红色预警：气温 ${temp}°C`
         } else if (temp <= -10) {
           alert = `💙 严寒寒潮预警：气温 ${temp}°C`
-        } else if (desc.includes('thunder')) {
+        } else if (descEn.toLowerCase().includes('thunder')) {
           alert = `⛈ 强对流天气预警（雷电）`
+        } else if (precipMM >= 20) {
+          alert = `🌧 强降水预警：降水量 ${precipMM}mm`
         }
 
-        // ===== 未来短临预测（略） =====
+        // ===== 4. 未来短临预测 =====
+        let forecast = ''
         try {
           const hourly = data.weather[0]?.hourly || []
           const currentHour = new Date().getHours()
           const upcoming = hourly.filter(h => parseInt(h.time) / 100 > currentHour).slice(0, 2)
           for (let f of upcoming) {
-            const fDesc = f.weatherDesc[0]?.value?.toLowerCase() || ''
+            const fDesc = f.weatherDesc?.[0]?.value || ''
+            const fDescZh = f['lang_zh-cn']?.[0]?.value || ''
+            const fText = fDescZh || fDesc
             const timeStr = (parseInt(f.time) / 100).toString().padStart(2, '0') + ':00'
             const rainChance = parseInt(f.chanceofrain || '0')
             const snowChance = parseInt(f.chanceofsnow || '0')
-            if (rainChance >= 40 || fDesc.includes('rain') || fDesc.includes('drizzle') || fDesc.includes('shower') || fDesc.includes('thunder')) {
+            const thunderChance = parseInt(f.chanceofthunder || '0')
+
+            if (thunderChance >= 40 || fText.includes('雷') || fDesc.toLowerCase().includes('thunder')) {
+              forecast = `⏳ ${timeStr} 雷电概率 ${thunderChance}%`
+              break
+            } else if (rainChance >= 40 || fText.includes('雨') || fDesc.toLowerCase().includes('rain') || fDesc.toLowerCase().includes('drizzle') || fDesc.toLowerCase().includes('shower')) {
               forecast = `⏳ ${timeStr} 降雨概率 ${rainChance}%`
               break
-            } else if (snowChance >= 40 || fDesc.includes('snow') || fDesc.includes('sleet')) {
+            } else if (snowChance >= 40 || fText.includes('雪') || fDesc.toLowerCase().includes('snow') || fDesc.toLowerCase().includes('sleet')) {
               forecast = `⏳ ${timeStr} 降雪概率 ${snowChance}%`
               break
             }
           }
         } catch (e) { /* ignore */ }
 
-        // ===== 当前天气状态机（严格匹配） =====
-        const isRain = (
-          desc.includes('rain') ||
-          desc.includes('drizzle') ||
-          desc.includes('shower') ||
-          desc.includes('thunder')
-        ) && !desc.includes('vicinity')
-
-        const isSnow = (desc.includes('snow') || desc.includes('sleet')) && !desc.includes('vicinity')
-
-        // 用 weatherCode 辅助判断（部分天气代码）
-        const rainCodes = [176, 263, 266, 293, 296, 299, 302, 305, 308, 353, 356, 359, 386, 389]
-        const isRainByCode = rainCodes.includes(weatherCode)
-
-        if (desc.includes('thunder')) {
-          icon = '⛈'; text = '雷阵雨'; tip = '雷阵雨来袭！带闪电危险，快收衣服'
-        } else if (desc.includes('heavy rain') || desc.includes('torrential')) {
-          icon = '⛈'; text = '暴雨'; tip = '暴雨倾盆！快收衣服'
-        } else if (isRain || isRainByCode) {
-          icon = '🌧'; text = '有雨'; tip = '有雨，衣服赶紧收进屋'
-        } else if (isSnow) {
-          icon = '❄️'; text = '下雪'; tip = '下雪啦，防寒保暖'
-        } else if (desc.includes('fog') || desc.includes('mist') || desc.includes('haze')) {
-          icon = '🌫'; text = '大雾'; tip = '大雾弥漫，别晒衣服啦'
-        } else if (desc.includes('partly cloudy') || desc.includes('partly_cloudy')) {
-          icon = '🌤'; text = '晴间多云'; tip = humidity > 80 ? '阴冷潮湿，衣服很难干' : '阳光被遮挡，晾晒稍慢'
-        } else if (desc.includes('cloudy') || desc.includes('overcast')) {
-          icon = '☁️'; text = '阴'; tip = humidity > 80 ? '阴冷潮湿，衣服很难干' : '纯阴天，蒸发较慢'
-        } else {
-          icon = '☀️'; text = '晴'; tip = `阳光正好，体感 ${feelLike}°C`
-        }
-
-        // 🔥 关键日志
-        console.log('✅ [Header] 最终 text:', text, ' desc:', desc)
+        console.log('✅ [Header] 显示文字:', displayText, '| 粒子关键词:', particleText)
 
         setWeather({
           temp: temp.toString(),
-          text,
+          text: displayText,
           icon,
           humidity,
           tip,
@@ -142,33 +253,19 @@ const Header = props => {
           error: false
         })
 
-        // 向上传递（包含 tip）
+        // 🆕 分离传递：displayText 给 Header UI，text (particleText) 给 GardenTree 粒子
         if (onWeatherChange) {
-          onWeatherChange({ text, alert, tip })
+          onWeatherChange({ text: particleText, displayText, alert, tip })
         }
       })
       .catch(err => {
         console.error('❌ [Header] 天气获取失败:', err)
-        // 重试最多2次
         if (fetchAttempts.current < 2) {
           fetchAttempts.current += 1
           setTimeout(fetchWeather, 2000)
           return
         }
-        // 降级：使用一个模拟雨天用于测试（如果当前时间在白天且湿度大，模拟雨）
-        // 仅供演示：您可以注释掉以下模拟代码，保持默认晴
-        const now = new Date()
-        const hour = now.getHours()
-        // 如果当前是白天且湿度（从navigator无法获取，随机模拟）
-        // 为了测试，我们强制设为雨（可取消注释）
-        // const testRain = true; // 打开此开关强制雨
-        // if (testRain) {
-        //   setWeather({ temp: '21', text: '暴雨', icon: '⛈', humidity: '100', tip: '测试暴雨', alert: '模拟暴雨', forecast: '', error: true })
-        //   if (onWeatherChange) onWeatherChange({ text: '暴雨', alert: '模拟暴雨', tip: '测试暴雨' })
-        //   return
-        // }
 
-        // 否则默认晴
         setWeather({
           temp: '26',
           text: '晴',
@@ -180,19 +277,17 @@ const Header = props => {
           error: true
         })
         if (onWeatherChange) {
-          onWeatherChange({ text: '晴', alert: '', tip: '默认晴' })
+          onWeatherChange({ text: '晴', displayText: '晴', alert: '', tip: '默认晴' })
         }
       })
   }
 
   useEffect(() => {
     fetchWeather()
-    // 每30分钟刷新一次
     const interval = setInterval(fetchWeather, 30 * 60 * 1000)
     return () => clearInterval(interval)
   }, [])
 
-  // 路由切换关闭侧栏
   useEffect(() => {
     router.events.on('routeChangeComplete', toggleSideBarClose)
     return () => router.events.off('routeChangeComplete', toggleSideBarClose)
