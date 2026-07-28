@@ -3,7 +3,7 @@ import React, { useEffect, useRef, memo } from 'react'
 
 /**
  * 🌳 自然生长生命树 · 全环境自适应与 Perlin 动态自然风完美版
- * ✨ 特效：雷雨闪电 (Lightning) 与 沉浸式流动迷雾 (Fog)
+ * ✨ 特效：雷雨闪电、流动迷雾、全天气覆盖粒子系统（雨/雪/云/冰雹/雨夹雪）
  * ⚡ 优化：零 GC 开销复用 Vector、完备的雷电残影清理与极端性能防护
  */
 const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', month = 7, onCategoryFilter }) => {
@@ -104,6 +104,7 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
         let groundPlants = []
         let lastDataSignature = ''
         let particles = []
+        let clouds = [] // ☁️ 云朵粒子数组
 
         // ⚡ 雷电控制变量
         let lightningAlpha = 0
@@ -118,87 +119,87 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
         ]
 
         // ============================
-        // 🌧️ 天气粒子配置解析器
+        // 🌧️ 全天气粒子配置解析器
         // ============================
         const getWeatherParticleConfig = (wText) => {
-  const cfg = { 
-    count: 0, speedMin: 0, speedMax: 0, sizeMin: 0, sizeMax: 0, 
-    type: 'none', windEffect: 0.3, hasLightning: false 
-  }
-  if (!wText) return cfg
+          const cfg = { 
+            count: 0, speedMin: 0, speedMax: 0, sizeMin: 0, sizeMax: 0, 
+            type: 'none', windEffect: 0.3, hasLightning: false 
+          }
+          if (!wText) return cfg
 
-  // 1. 🧊 冰雹效果
-  if (wText.includes('冰雹') || wText.includes('霰')) {
-    cfg.type = 'hail'
-    cfg.count = 100
-    cfg.speedMin = 18
-    cfg.speedMax = 28
-    cfg.sizeMin = 3
-    cfg.sizeMax = 6
-    cfg.windEffect = 0.8
-    return cfg
-  }
+          // 1. 🧊 冰雹效果
+          if (wText.includes('冰雹') || wText.includes('霰')) {
+            cfg.type = 'hail'
+            cfg.count = 80
+            cfg.speedMin = 14
+            cfg.speedMax = 22
+            cfg.sizeMin = 3
+            cfg.sizeMax = 6
+            cfg.windEffect = 0.5
+            return cfg
+          }
 
-  // 2. 🌧️❄️ 雨夹雪/冻雨
-  if (wText.includes('雨夹雪') || wText.includes('冻雨')) {
-    cfg.type = 'sleet'
-    cfg.count = 120
-    cfg.speedMin = 6
-    cfg.speedMax = 14
-    cfg.sizeMin = 2
-    cfg.sizeMax = 5
-    cfg.windEffect = 0.9
-    return cfg
-  }
+          // 2. 🌧️❄️ 雨夹雪/冻雨
+          if (wText.includes('雨夹雪') || wText.includes('冻雨')) {
+            cfg.type = 'sleet'
+            cfg.count = 120
+            cfg.speedMin = 6
+            cfg.speedMax = 14
+            cfg.sizeMin = 2
+            cfg.sizeMax = 5
+            cfg.windEffect = 0.9
+            return cfg
+          }
 
-  // 3. 🌫️ 雾/霾/沙尘/浮尘
-  if (wText.includes('雾') || wText.includes('霾') || wText.includes('沙') || wText.includes('尘')) {
-    cfg.type = 'fog'
-    return cfg
-  }
+          // 3. 🌫️ 雾/霾/沙尘/浮尘
+          if (wText.includes('雾') || wText.includes('霾') || wText.includes('沙') || wText.includes('尘')) {
+            cfg.type = 'fog'
+            return cfg
+          }
 
-  // 4. ❄️ 纯雪系
-  if (wText.includes('雪')) {
-    cfg.type = 'snow'
-    cfg.windEffect = 0.6
-    if (wText.includes('暴雪') || wText.includes('大暴雪')) {
-      cfg.count = 250; cfg.speedMin = 1; cfg.speedMax = 3; cfg.sizeMin = 4; cfg.sizeMax = 8
-    } else if (wText.includes('大雪')) {
-      cfg.count = 150; cfg.speedMin = 1.5; cfg.speedMax = 3; cfg.sizeMin = 3; cfg.sizeMax = 6
-    } else if (wText.includes('中雪')) {
-      cfg.count = 80; cfg.speedMin = 2; cfg.speedMax = 4; cfg.sizeMin = 2; cfg.sizeMax = 4
-    } else {
-      cfg.count = 40; cfg.speedMin = 1; cfg.speedMax = 2; cfg.sizeMin = 2; cfg.sizeMax = 3
-    }
-    return cfg
-  }
+          // 4. ❄️ 纯雪系
+          if (wText.includes('雪')) {
+            cfg.type = 'snow'
+            cfg.windEffect = 0.6
+            if (wText.includes('暴雪') || wText.includes('大暴雪')) {
+              cfg.count = 250; cfg.speedMin = 1; cfg.speedMax = 3; cfg.sizeMin = 4; cfg.sizeMax = 8
+            } else if (wText.includes('大雪')) {
+              cfg.count = 150; cfg.speedMin = 1.5; cfg.speedMax = 3; cfg.sizeMin = 3; cfg.sizeMax = 6
+            } else if (wText.includes('中雪')) {
+              cfg.count = 80; cfg.speedMin = 2; cfg.speedMax = 4; cfg.sizeMin = 2; cfg.sizeMax = 4
+            } else {
+              cfg.count = 40; cfg.speedMin = 1; cfg.speedMax = 2; cfg.sizeMin = 2; cfg.sizeMax = 3
+            }
+            return cfg
+          }
 
-  // 5. 🌧️ 纯雨/雷阵雨系
-  if (wText.includes('雨') || wText.includes('雷') || wText.includes('阵雨')) {
-    cfg.type = 'rain'
-    cfg.windEffect = 1.2
-    if (wText.includes('雷')) cfg.hasLightning = true
+          // 5. 🌧️ 纯雨/雷阵雨系
+          if (wText.includes('雨') || wText.includes('雷') || wText.includes('阵雨')) {
+            cfg.type = 'rain'
+            cfg.windEffect = 1.2
+            if (wText.includes('雷')) cfg.hasLightning = true
 
-    if (wText.includes('暴雨') || wText.includes('特大暴雨')) {
-      cfg.count = 350; cfg.speedMin = 14; cfg.speedMax = 24; cfg.sizeMin = 3; cfg.sizeMax = 6
-    } else if (wText.includes('大雨')) {
-      cfg.count = 200; cfg.speedMin = 11; cfg.speedMax = 16; cfg.sizeMin = 2.5; cfg.sizeMax = 5
-    } else if (wText.includes('中雨')) {
-      cfg.count = 120; cfg.speedMin = 8; cfg.speedMax = 12; cfg.sizeMin = 2; cfg.sizeMax = 4
-    } else {
-      cfg.count = 60; cfg.speedMin = 5; cfg.speedMax = 9; cfg.sizeMin = 2; cfg.sizeMax = 3
-    }
-    return cfg
-  }
+            if (wText.includes('暴雨') || wText.includes('特大暴雨')) {
+              cfg.count = 350; cfg.speedMin = 14; cfg.speedMax = 24; cfg.sizeMin = 3; cfg.sizeMax = 6
+            } else if (wText.includes('大雨')) {
+              cfg.count = 200; cfg.speedMin = 11; cfg.speedMax = 16; cfg.sizeMin = 2.5; cfg.sizeMax = 5
+            } else if (wText.includes('中雨')) {
+              cfg.count = 120; cfg.speedMin = 8; cfg.speedMax = 12; cfg.sizeMin = 2; cfg.sizeMax = 4
+            } else {
+              cfg.count = 60; cfg.speedMin = 5; cfg.speedMax = 9; cfg.sizeMin = 2; cfg.sizeMax = 3
+            }
+            return cfg
+          }
 
-  // 6. ☁️ 阴天/多云 (不需要粒子，但可以做云层或者保持清新干净)
-  if (wText.includes('阴') || wText.includes('云')) {
-    cfg.type = 'cloudy'
-    return cfg
-  }
+          // 6. ☁️ 阴天/多云/少云
+          if (wText.includes('阴') || wText.includes('云')) {
+            cfg.type = 'cloudy'
+            return cfg
+          }
 
-  return cfg
-}
+          return cfg
+        }
 
         p.setup = () => {
           const container = containerRef.current
@@ -210,7 +211,6 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           p.textFont('PingFang SC', 11)
           p.textAlign(p.CENTER, p.CENTER)
 
-          // 实例化复用变量
           reusableVec = p.createVector(0, 0)
           if (typeof DOMPoint !== 'undefined') {
             reusableDomPoint = new DOMPoint(0, 0)
@@ -295,11 +295,10 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
         p.draw = () => {
           const { posts: allPosts, currentYear: year, weatherText: weather, month: curMonth } = dataRef.current
 
-          // 应急后备：从全局 __weatherInfo 中读取
           let finalWeather = weather
           if (typeof window !== 'undefined' && window.__weatherInfo && window.__weatherInfo.text) {
             const globalText = window.__weatherInfo.text
-            if (globalText && (globalText.includes('雨') || globalText.includes('雷') || globalText.includes('雪') || globalText.includes('雾'))) {
+            if (globalText && (globalText.includes('雨') || globalText.includes('雷') || globalText.includes('雪') || globalText.includes('雾') || globalText.includes('云'))) {
               if (weather === '晴' || weather === 'undefined' || !weather || weather === '加载中') {
                 finalWeather = globalText
               }
@@ -329,7 +328,7 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           p.clear()
 
           // ============================
-          // 1. ⚡ 雷电背景高亮闪烁 (Backdrop Flash)
+          // 1. ⚡ 雷电背景高亮闪烁
           // ============================
           if (weatherConfig.hasLightning) {
             if (p.random(1) < 0.015 && lightningAlpha <= 0) {
@@ -340,11 +339,10 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
               p.push()
               p.noStroke()
               p.fill(220, 235, 255, lightningAlpha * 0.25)
-              p.rect(0, 0, p.width, p.height) // 闪光天幕
+              p.rect(0, 0, p.width, p.height)
               p.pop()
               lightningAlpha -= p.random(12, 25)
 
-              // ⚡ 优化：完全熄灭时清理闪电路径残影
               if (lightningAlpha <= 0) {
                 lightningAlpha = 0
                 lightningPath = []
@@ -384,7 +382,6 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           const targetTrunkLen = safeMap(Math.min(totalArticles, 24), 2, 24, 80, 135, true) * growProgress
           p.noFill(); p.stroke(70, 85, 75)
 
-          // 🚀 性能优化：重置 Vector 而非 new 产生 GC 垃圾
           if (!reusableVec) reusableVec = p.createVector(0, 0)
           else reusableVec.set(0, 0)
 
@@ -464,7 +461,6 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
               p.fill(hoveredCategory === cat ? 40 : 100, 255 * labelAlpha); p.text(txt, 0, -1)
               p.pop()
 
-              // 🚀 性能优化：复用 DOMPoint 计算画布绝对坐标
               const transform = p.drawingContext.getTransform()
               let px = 0, py = 0
               if (reusableDomPoint) {
@@ -513,14 +509,12 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           if (lightningAlpha > 30 && lightningPath.length > 1) {
             p.push()
             p.noFill()
-            // 光晕外发光
             p.stroke(200, 230, 255, lightningAlpha)
             p.strokeWeight(4)
             p.beginShape()
             for (let pt of lightningPath) p.vertex(pt.x, pt.y)
             p.endShape()
 
-            // 闪电核心白光
             p.stroke(255, 255, 255, lightningAlpha)
             p.strokeWeight(2)
             p.beginShape()
@@ -530,7 +524,56 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           }
 
           // ============================
-          // 5. 🌧️/❄️ 绘制天气降水粒子 (Rain / Snow)
+          // 5. ☁️ 绘制多云/少云/阴天云朵 (Clouds Effect)
+          // ============================
+          if (weatherConfig.type === 'cloudy') {
+            const targetCloudCount = finalWeather.includes('少云') ? 2 : 4
+
+            while (clouds.length < targetCloudCount) {
+              clouds.push({
+                x: p.random(-100, p.width),
+                y: p.random(20, 100),
+                scale: p.random(0.7, 1.2),
+                speed: p.random(0.15, 0.4)
+              })
+            }
+
+            p.push()
+            p.noStroke()
+            for (let i = 0; i < clouds.length; i++) {
+              const c = clouds[i]
+              c.x += c.speed + wind * 0.08
+
+              if (c.x > p.width + 120) {
+                c.x = -120
+                c.y = p.random(20, 100)
+              }
+
+              p.push()
+              p.translate(c.x, c.y)
+              p.scale(c.scale)
+
+              // 云朵阴影（在纯白背景下形成立体感与可见度）
+              p.fill(210, 225, 240, 110)
+              p.ellipse(0, 6, 70, 32)
+              p.ellipse(-20, 9, 45, 28)
+              p.ellipse(20, 9, 45, 28)
+
+              // 云朵主体
+              p.fill(245, 250, 255, 220)
+              p.ellipse(0, 0, 65, 30)
+              p.ellipse(-20, 3, 40, 24)
+              p.ellipse(20, 3, 40, 24)
+              p.ellipse(-10, -8, 32, 26)
+              p.ellipse(10, -6, 28, 22)
+
+              p.pop()
+            }
+            p.pop()
+          }
+
+          // ============================
+          // 6. 🌧️/❄️/🧊 绘制天气降水粒子 (Rain / Snow / Hail / Sleet)
           // ============================
           if (weatherConfig.count > 0) {
             while (particles.length < weatherConfig.count) {
@@ -538,7 +581,8 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
                 x: p.random(p.width),
                 y: p.random(p.height),
                 speed: p.random(weatherConfig.speedMin, weatherConfig.speedMax),
-                size: p.random(weatherConfig.sizeMin, weatherConfig.sizeMax)
+                size: p.random(weatherConfig.sizeMin, weatherConfig.sizeMax),
+                isSnowPart: p.random(1) > 0.5 // 专门供雨夹雪使用的随机类型标记
               })
             }
 
@@ -554,6 +598,7 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
                 pt.x = p.random(p.width)
                 pt.speed = p.random(weatherConfig.speedMin, weatherConfig.speedMax)
                 pt.size = p.random(weatherConfig.sizeMin, weatherConfig.sizeMax)
+                pt.isSnowPart = p.random(1) > 0.5
               }
               if (pt.x > p.width) pt.x = 0
               if (pt.x < 0) pt.x = p.width
@@ -572,6 +617,21 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
                 p.ellipse(pt.x, pt.y, glowSize, glowSize)
                 p.fill(255, 255, 255, 240)
                 p.ellipse(pt.x, pt.y, pt.size, pt.size)
+              } else if (weatherConfig.type === 'hail') {
+                // 🧊 冰雹：硬质有反光的正方形/圆形冰晶
+                p.fill(180, 220, 255, 200)
+                p.rect(pt.x, pt.y, pt.size, pt.size, 1)
+                p.fill(255, 255, 255, 240)
+                p.rect(pt.x + 1, pt.y + 1, pt.size * 0.5, pt.size * 0.5, 1)
+              } else if (weatherConfig.type === 'sleet') {
+                // 🌧️❄️ 雨夹雪：交替渲染雨丝和小雪花
+                if (pt.isSnowPart) {
+                  p.fill(255, 255, 255, 220)
+                  p.ellipse(pt.x, pt.y, pt.size, pt.size)
+                } else {
+                  p.fill(170, 215, 255, 200)
+                  p.rect(pt.x, pt.y, 2, pt.speed * 1.2, 1)
+                }
               }
             }
             p.pop()
