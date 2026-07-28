@@ -18,13 +18,20 @@ import { useSpringBackground } from '../hooks/useSpringBackground'
 const LayoutBase = props => {
   const [isClient, setIsClient] = useState(false)
   
-  // 💡 持有全局天气状态
-  const [weatherInfo, setWeatherInfo] = useState({ text: '晴', alert: '' })
+  // 💡 1. 扩充全局天气状态字段，完全匹配 Header 的传值
+  const [weatherInfo, setWeatherInfo] = useState({ 
+    text: '晴',         // 给 GardenTree 粒子的归一化关键词
+    displayText: '晴',  // 显示给用户看的天气原词
+    alert: '',          // 预警信息
+    tip: ''             // 晾晒/出行提示
+  })
 
-  // 🌧️ 同步到 window，供 GardenTree 等深层组件读取
+  // 🌧️ 2. 同步完整 Weather 对象到 window，供 GardenTree 等深层 Canvas 动画组件实时读取
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.__weatherInfo = weatherInfo
+      // 💡 额外派发自定义事件，方便 GardenTree 监听即时变化（可选增强）
+      window.dispatchEvent(new CustomEvent('weatherUpdated', { detail: weatherInfo }))
     }
   }, [weatherInfo])
 
@@ -77,11 +84,11 @@ const LayoutBase = props => {
       )}
       {DynamicStyleGarden && <DynamicStyleGarden />}
       
-      {/* 💡 绑定 Weather 回调 */}
+      {/* 💡 绑定 Weather 回调：Header 传出的对象包含 { text, displayText, alert, tip } */}
       <Header {...props} onWeatherChange={setWeatherInfo} />
 
       <div className="flex-grow w-full pt-16">
-        {/* 💡 将 weatherInfo 透传给子页面 */}
+        {/* 💡 将完整 weatherInfo 透传给子页面 */}
         {React.isValidElement(children)
           ? React.cloneElement(children, { weatherInfo })
           : children}
