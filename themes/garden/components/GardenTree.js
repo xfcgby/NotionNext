@@ -480,28 +480,29 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           p.pop()
 
           // ============================
-          // 3. 🌫️ 绘制雾天效果 (Fog Effect)
-          // ============================
-          if (weatherConfig.type === 'fog') {
-            p.push()
-            p.noStroke()
-            for (let f = 0; f < 3; f++) {
-              const fogY = p.height * (0.2 + f * 0.25)
-              const fogAlpha = 60 + f * 20
-              p.fill(235, 242, 245, fogAlpha)
+// 3. 🌫️ 绘制雾天效果 (Fog Effect)
+// ============================
+if (weatherConfig.type === 'fog') {
+  p.push()
+  p.noStroke()
+  for (let f = 0; f < 3; f++) {
+    const fogY = p.height * (0.2 + f * 0.25)
+    const fogAlpha = 60 + f * 20
+    p.fill(235, 242, 245, fogAlpha)
 
-              p.beginShape()
-              p.vertex(0, p.height)
-              for (let x = 0; x <= p.width; x += 30) {
-                const n = p.noise(x * 0.005, timeScale * 0.15 + f * 10)
-                const y = fogY + (n - 0.5) * 80
-                p.vertex(x, y)
-              }
-              p.vertex(p.width, p.height)
-              p.endShape(p.CLOSE)
-            }
-            p.pop()
-          }
+    p.beginShape()
+    p.vertex(0, p.height)
+    for (let x = 0; x <= p.width; x += 15) {
+      const n = p.noise(x * 0.005, timeScale * 0.15 + f * 10)
+      p.curveVertex(x, fogY + (n - 0.5) * 80)
+    }
+    const lastN = p.noise(p.width * 0.005, timeScale * 0.15 + f * 10)
+    p.curveVertex(p.width, fogY + (lastN - 0.5) * 80)
+    p.vertex(p.width, p.height)
+    p.endShape(p.CLOSE)
+  }
+  p.pop()
+}
 
           // ============================
           // 4. ⚡ 绘制闪电链 (Lightning Bolt)
