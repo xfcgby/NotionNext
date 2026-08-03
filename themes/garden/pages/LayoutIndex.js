@@ -7,13 +7,16 @@ import BlogPostListPage from '../components/BlogPostListPage'
 import YearSelector from '../components/YearSelector'
 import PostListWrapper from '../components/PostListWrapper'
 
+// 💡 引入时光机 Portal 组件
+import TimeMachinePortal from '../components/TimeMachinePortal'
+
 /**
  * ==========================================================================
- * 【首页布局组件】LayoutIndex
+ * 【首页布局组件】LayoutIndex（合并版）
  * ==========================================================================
  */
 const LayoutIndex = props => {
-  const { notice, tags, posts, weatherInfo } = props // 💡 获取父级传递的 weatherInfo
+  const { notice, tags, posts, weatherInfo } = props
   const [activeYear, setActiveYear] = useState(new Date().getFullYear().toString())
 
   // 💡 拼接完整的天气描述文本（包含 text, tip, alert）
@@ -66,7 +69,7 @@ const LayoutIndex = props => {
     })
   }, [posts, activeYear])
 
-  // 💡 过滤出需要在“新芽破土集”（首页文章列表）中展示的文章
+  // 💡 过滤出需要在"新芽破土集"（首页文章列表）中展示的文章
   // 如果 Notion 里的 ShowInList 没勾选 (false)，则在首页列表中排除，但依然保留在热力图与生命树中
   const filteredPostsForList = useMemo(() => {
     if (!posts || posts.length === 0) return []
@@ -80,46 +83,49 @@ const LayoutIndex = props => {
   }, [posts])
 
   return (
-    <LayoutSideBar props={props}>
-      <section className="flex-1 min-w-0 space-y-6">
-        {/* 生命树 */}
-        <div className="garden-card p-6 flex flex-col items-center relative">
-          <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 border-b border-dashed border-slate-100 dark:border-zinc-800 pb-3">
-            <div className="flex items-center space-x-2">
-              <span className="text-xl">🌳</span>
-              <h2 className="font-bold text-slate-800 dark:text-zinc-200">数字生命年轮时光机</h2>
+    // 💡 最外层套上 TimeMachinePortal，并将 props 透传进去
+    <TimeMachinePortal {...props}>
+      <LayoutSideBar props={props}>
+        <section className="flex-1 min-w-0 space-y-6">
+          {/* 生命树 */}
+          <div className="garden-card p-6 flex flex-col items-center relative">
+            <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 border-b border-dashed border-slate-100 dark:border-zinc-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <span className="text-xl">🌳</span>
+                <h2 className="font-bold text-slate-800 dark:text-zinc-200">木林图谱</h2>
+              </div>
+              <YearSelector
+                years={yearsList}
+                activeYear={activeYear}
+                onChange={setActiveYear}
+              />
             </div>
-            <YearSelector
-              years={yearsList}
-              activeYear={activeYear}
-              onChange={setActiveYear}
+
+            {/* 💡 传递 combinedWeatherText 给 GardenTree */}
+            <GardenTree
+              key={activeYear}
+              posts={historyAccumulatedPosts}
+              currentYear={activeYear}
+              weatherText={combinedWeatherText}
             />
           </div>
 
-          {/* 💡 传递 combinedWeatherText 给 GardenTree */}
-          <GardenTree
-            key={activeYear}
-            posts={historyAccumulatedPosts}
-            currentYear={activeYear}
-            weatherText={combinedWeatherText}
-          />
-        </div>
-
-        {/* 热力图 */}
-        <div className="garden-card p-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <span className="text-xl">🌱</span>
-            <h2 className="font-bold text-slate-800 dark:text-zinc-200">全年度耕耘热力图</h2>
+          {/* 热力图 */}
+          <div className="garden-card p-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <span className="text-xl">🌱</span>
+              <h2 className="font-bold text-slate-800 dark:text-zinc-200">全年度耕耘热力图</h2>
+            </div>
+            <CalendarHeatmap posts={posts} currentYear={activeYear} />
           </div>
-          <CalendarHeatmap posts={posts} currentYear={activeYear} />
-        </div>
 
-        {/* 文章列表（传入过滤后的 posts 列表） */}
-        <PostListWrapper title="新芽破土集" icon="🍃">
-          <BlogPostListPage {...props} posts={filteredPostsForList} />
-        </PostListWrapper>
-      </section>
-    </LayoutSideBar>
+          {/* 文章列表（传入过滤后的 posts 列表） */}
+          <PostListWrapper title="新芽破土集" icon="🍃">
+            <BlogPostListPage {...props} posts={filteredPostsForList} />
+          </PostListWrapper>
+        </section>
+      </LayoutSideBar>
+    </TimeMachinePortal>
   )
 }
 
