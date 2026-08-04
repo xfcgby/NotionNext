@@ -479,26 +479,37 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           }
           p.pop()
 
-          // ============================
+         // ============================
 // 3. 🌫️ 绘制雾天效果 (Fog Effect)
 // ============================
 if (weatherConfig.type === 'fog') {
   p.push()
   p.noStroke()
+
+  // 1. 设置左右两边的对称间距（根据需要自行调整数值，例如 30px 或 40px）
+  const margin = 40 
+  const startX = margin
+  const endX = p.width - margin
+
   for (let f = 0; f < 3; f++) {
     const fogY = p.height * (0.2 + f * 0.25)
     const fogAlpha = 60 + f * 20
     p.fill(235, 242, 245, fogAlpha)
 
     p.beginShape()
-    p.vertex(0, p.height)
-    for (let x = 0; x <= p.width; x += 15) {
-      const n = p.noise(x * 0.005, timeScale * 0.15 + f * 10)
-      p.curveVertex(x, fogY + (n - 0.5) * 80)
+    
+    // 2. 波浪线从 startX 采样到 endX
+    for (let x = startX; x <= endX + 30; x += 30) {
+      const actualX = Math.min(x, endX) // 确保最后一个点刚好在 endX 上
+      const n = p.noise(actualX * 0.005, timeScale * 0.15 + f * 10)
+      const y = fogY + (n - 0.5) * 80
+      p.vertex(actualX, y)
     }
-    const lastN = p.noise(p.width * 0.005, timeScale * 0.15 + f * 10)
-    p.curveVertex(p.width, fogY + (lastN - 0.5) * 80)
-    p.vertex(p.width, p.height)
+
+    // 3. 垂直向下封口：右下角 (endX, p.height) -> 左下角 (startX, p.height)
+    p.vertex(endX, p.height)
+    p.vertex(startX, p.height)
+    
     p.endShape(p.CLOSE)
   }
   p.pop()
