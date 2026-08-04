@@ -7,7 +7,7 @@ import CONFIG from '../config'
  * @constructor
  */
 const ButtonJumpToComment = () => {
-  if (!siteConfig('HEXO_WIDGET_TO_COMMENT', null, CONFIG)) {
+  if (!siteConfig('GARDEN_WIDGET_TO_COMMENT', null, CONFIG)) {
     return <></>
   }
 
