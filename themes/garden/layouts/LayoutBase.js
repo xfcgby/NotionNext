@@ -63,7 +63,7 @@ const LayoutBase = props => {
   const floatSlot = (
     <>
       {post && <ButtonJumpToComment />}
-    //  <ButtonJumpToTop />
+      { /*  <ButtonJumpToTop />*/}
       <ButtonRandomPost {...props} />
     </>
   )
