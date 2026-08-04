@@ -18,9 +18,10 @@ export default function DisableCopy() {
       alert('抱歉，本网页内容不可复制！')
     }
 
-    // 2. 阻止右键保存图片
+    // 2. 阻止右键保存图片（桌面端）
     const handleContextMenu = (event) => {
-      if (event.target.tagName === 'IMG' || event.target.closest('img')) {
+      const target = event.target
+      if (target.tagName === 'IMG' || target.closest('img')) {
         event.preventDefault()
         alert('抱歉，图片不可保存！')
       }
@@ -33,20 +34,30 @@ export default function DisableCopy() {
       }
     }
 
-    // 4. 给单张图片加防护属性
+    // 4. iOS 专用：阻止长按保存图片
+    const handleTouchStart = (event) => {
+      const target = event.target
+      if (target.tagName === 'IMG' || target.closest('img')) {
+        event.preventDefault()
+      }
+    }
+
+    // 5. 给单张图片加防护属性
     const protectImage = (img) => {
       img.setAttribute('draggable', 'false')
       img.style.userSelect = 'none'
       img.style.webkitUserSelect = 'none'
       img.style.webkitUserDrag = 'none'
+      img.style.webkitTouchCallout = 'none'  // iOS 禁用长按菜单
+      img.style.pointerEvents = 'none'         // 阻止触摸交互
     }
 
-    // 5. 批量处理页面上已有图片
+    // 6. 批量处理页面上已有图片
     const protectAllImages = () => {
       document.querySelectorAll('img').forEach(protectImage)
     }
 
-    // 6. 监听 Notion 异步渲染的动态图片
+    // 7. 监听 Notion 异步渲染的动态图片
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
@@ -60,11 +71,24 @@ export default function DisableCopy() {
       })
     })
 
+    // 8. 注入 iOS 全局样式（作为兜底）
+    const iosStyle = document.createElement('style')
+    iosStyle.textContent = `
+      .forbid-copy img,
+      .forbid-copy * img {
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        pointer-events: none !important;
+      }
+    `
+    document.head.appendChild(iosStyle)
+
     // 初始化挂载
     html.classList.add('forbid-copy')
     document.addEventListener('copy', handleCopy)
     document.addEventListener('contextmenu', handleContextMenu)
     document.addEventListener('dragstart', handleDragStart)
+    document.addEventListener('touchstart', handleTouchStart, { passive: false })
     protectAllImages()
     observer.observe(document.body, { childList: true, subtree: true })
 
@@ -74,7 +98,9 @@ export default function DisableCopy() {
       document.removeEventListener('copy', handleCopy)
       document.removeEventListener('contextmenu', handleContextMenu)
       document.removeEventListener('dragstart', handleDragStart)
+      document.removeEventListener('touchstart', handleTouchStart)
       observer.disconnect()
+      if (iosStyle.parentNode) iosStyle.parentNode.removeChild(iosStyle)
     }
   }, [])
 
