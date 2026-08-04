@@ -11,13 +11,23 @@ export default function RightFloatArea({ floatSlot }) {
   // 🌙 夜间模式状态（内部管理）
   const [isDark, setIsDark] = useState(false)
 
-  // 🌙 初始化：读取本地存储或系统偏好
+  // 🌙 初始化：读取本地存储或系统偏好，并同步到 html
   useEffect(() => {
     const stored = localStorage.getItem('theme-garden-dark-mode')
-    if (stored !== null) {
-      setIsDark(stored === 'true')
+    const shouldBeDark = stored !== null 
+      ? stored === 'true' 
+      : window.matchMedia('(prefers-color-scheme: dark)').matches
+    
+    setIsDark(shouldBeDark)
+    
+    // 初始化时同步 html class，避免首屏闪烁
+    const root = document.documentElement
+    if (shouldBeDark) {
+      root.classList.add('dark')
+      root.classList.remove('light')
     } else {
-      setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches)
+      root.classList.remove('dark')
+      root.classList.add('light')
     }
   }, [])
 
@@ -26,8 +36,10 @@ export default function RightFloatArea({ floatSlot }) {
     const root = document.documentElement
     if (isDark) {
       root.classList.add('dark')
+      root.classList.remove('light')
     } else {
       root.classList.remove('dark')
+      root.classList.add('light')
     }
     localStorage.setItem('theme-garden-dark-mode', isDark.toString())
   }, [isDark])
