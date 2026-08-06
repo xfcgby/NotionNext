@@ -1,20 +1,20 @@
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import { useRouter } from 'next/router'
-import { useGardenGlobal } from '..'
+// 1. 删掉旧的 import { useGardenGlobal } from '..'
 
 /**
  * 🔍 数字花园专属 · 生态探照灯搜索按钮 (美化升级版)
  * 完美保留原有 Algolia / 本地动态路由分发逻辑，注入手绘暖金微光
  */
 export default function SearchButton(props) {
-  const { locale } = useGlobal()
+  // 2. 直接从 useGlobal 中获取 searchModal！
+  const { locale, searchModal } = useGlobal()
   const router = useRouter()
-  const { searchModal } = useGardenGlobal()
 
   function handleSearch() {
     if (siteConfig('ALGOLIA_APP_ID')) {
-      searchModal.current.openSearch()
+      searchModal?.current?.openSearch()
     } else {
       router.push('/search')
     }

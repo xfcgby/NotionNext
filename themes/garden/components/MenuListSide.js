@@ -274,4 +274,5 @@ const MenuListSide = props => {
   )
 }
 
+export { MenuListSide }
 export default MenuListSide

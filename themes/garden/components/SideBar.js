@@ -2,7 +2,7 @@ import LazyImage from '@/components/LazyImage'
 import { siteConfig } from '@/lib/config'
 import { useRouter } from 'next/router'
 import MenuGroupCard from './MenuGroupCard'
-import { MenuListSide } from './MenuListSide'
+import MenuListSide from './MenuListSide'
 
 /**
  * 侧边抽屉
