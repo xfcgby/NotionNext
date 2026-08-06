@@ -1,5 +1,5 @@
-import { siteConfig } from '@/lib/config'
 import { useEffect } from 'react'
+
 
 /**
  * 禁止用户拷贝文章及保存图片的插件
@@ -14,9 +14,11 @@ export default function DisableCopy() {
 
     // 1. 阻止文字复制
     const handleCopy = (event) => {
+
       event.preventDefault()
       alert('抱歉，本网页内容不可复制！')
     }
+
 
     // 2. 阻止右键保存图片（桌面端）
     const handleContextMenu = (event) => {
@@ -101,6 +103,7 @@ export default function DisableCopy() {
       document.removeEventListener('touchstart', handleTouchStart)
       observer.disconnect()
       if (iosStyle.parentNode) iosStyle.parentNode.removeChild(iosStyle)
+
     }
   }, [])
 

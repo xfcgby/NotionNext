@@ -12,6 +12,7 @@ import ExternalScript from './ExternalScript'
 import WebWhiz from './Webwhiz'
 import { useGlobal } from '@/lib/global'
 import IconFont from './IconFont'
+import { getPageCanCopy } from '@/lib/utils/copyPermission'
 
 /**
  * 各种插件脚本
@@ -58,6 +59,7 @@ const ExternalPlugin = props => {
     NOTION_CONFIG
   )
   const CAN_COPY = siteConfig('CAN_COPY', null, NOTION_CONFIG)
+  const canCopy = getPageCanCopy(CAN_COPY, props?.post)
   const WEB_WHIZ_ENABLED = siteConfig('WEB_WHIZ_ENABLED', null, NOTION_CONFIG)
   const AD_WWADS_BLOCK_DETECT = siteConfig(
     'AD_WWADS_BLOCK_DETECT',
@@ -122,6 +124,7 @@ const ExternalPlugin = props => {
   // 默认关闭NProgress
   const ENABLE_NPROGRSS = siteConfig('ENABLE_NPROGRSS', false)
   const COZE_BOT_ID = siteConfig('COZE_BOT_ID')
+  const DOCS_CHAT_API = siteConfig('DOCS_CHAT_API')
   const HILLTOP_ADS_META_ID = siteConfig(
     'HILLTOP_ADS_META_ID',
     null,
@@ -257,8 +260,10 @@ const ExternalPlugin = props => {
       {COMMENT_TWIKOO_COUNT_ENABLE && <TwikooCommentCounter {...props} />}
       {RIBBON && <Ribbon />}
       {DIFY_CHATBOT_ENABLED && <DifyChatbot />}
-      {CUSTOM_RIGHT_CLICK_CONTEXT_MENU && <CustomContextMenu {...props} />}
-      {!CAN_COPY && <DisableCopy />}
+      {CUSTOM_RIGHT_CLICK_CONTEXT_MENU && (
+        <CustomContextMenu {...props} canCopy={canCopy} />
+      )}
+      {!canCopy && <DisableCopy />}
       {WEB_WHIZ_ENABLED && <WebWhiz />}
       {AD_WWADS_BLOCK_DETECT && <AdBlockDetect />}
       {TIANLI_KEY && <TianliGPT />}
@@ -266,7 +271,7 @@ const ExternalPlugin = props => {
       {ENABLE_NPROGRSS && <LoadingProgress />}
       {pluginsIdle && <AosAnimation />}
       {ANALYTICS_51LA_ID && ANALYTICS_51LA_CK && <LA51 />}
-      {COZE_BOT_ID && <Coze />}
+      {DOCS_CHAT_API ? <DocsChat /> : COZE_BOT_ID && <Coze />}
 
       {ANALYTICS_51LA_ID && ANALYTICS_51LA_CK && (
         <>
@@ -559,6 +564,9 @@ const AosAnimation = dynamic(() => import('@/components/AOSAnimation'), {
 })
 
 const Coze = dynamic(() => import('@/components/Coze'), {
+  ssr: false
+})
+const DocsChat = dynamic(() => import('@/components/DocsChat'), {
   ssr: false
 })
 const LA51 = dynamic(() => import('@/components/LA51'), {
