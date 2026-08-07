@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-
+import { siteConfig } from '@/lib/config'
 
 /**
  * 禁止用户拷贝文章及保存图片的插件
