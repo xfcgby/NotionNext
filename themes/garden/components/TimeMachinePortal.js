@@ -87,7 +87,7 @@ const getMilestonesFromPosts = (posts = [], startYear, currentYear) => {
     accumulatedCount += yearPostCount
 
     let growthStage = { icon: '🌰', statusText: '埋于土壤' }
-    if (accumulatedCount === 0) { growthStage = { icon: '🌰', statusText: '埋于土壤' } }
+    if (accumulatedCount <= 1) { growthStage = { icon: '🌰', statusText: '埋于土壤' } }
     else if (accumulatedCount <= 3) { growthStage = { icon: '🌱', statusText: '嫩芽破土' } }
     else if (accumulatedCount <= 8) { growthStage = { icon: '🌿', statusText: '枝叶渐茂' } }
     else if (accumulatedCount <= 15) { growthStage = { icon: '🌳', statusText: '参天大树' } }
