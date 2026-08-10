@@ -28,7 +28,7 @@ const GardenRocketIcon = ({ className = '', size = 34 }) => (
       d="M 50 64 C 45 70 38 75 32 75 C 32 68 33 64 34 62 Z" 
       className="fill-lime-400 dark:fill-lime-500 stroke-slate-700 dark:stroke-slate-200" 
     />
-    
+
     {/* 上(右)侧尾翼 (Lime 绿) */}
     <path 
       d="M 50 36 C 45 30 38 25 32 25 C 32 32 33 36 34 38 Z" 
@@ -156,8 +156,11 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
     const canvas = canvasRef.current
     const nodeRect = nodeEl.getBoundingClientRect()
     const canvasRect = canvas.getBoundingClientRect()
-    const cx = nodeRect.left + nodeRect.width / 2 - canvasRect.left
-    const cy = nodeRect.top + nodeRect.height / 2 - canvasRect.top
+    // ✅ 坐标映射：CSS 像素 → Canvas 逻辑像素
+    const scaleX = canvas.width / canvas.clientWidth
+    const scaleY = canvas.height / canvas.clientHeight
+    const cx = (nodeRect.left + nodeRect.width / 2 - canvasRect.left) * scaleX
+    const cy = (nodeRect.top + nodeRect.height / 2 - canvasRect.top) * scaleY
     const colorMap = {
       '🌰': ['#8B4513', '#a3e635', '#4ade80'], '🌱': ['#84cc16', '#4ade80', '#bef264'],
       '🌿': ['#228B22', '#4ade80', '#facc15'], '🌳': ['#228B22', '#4ade80', '#facc15'],
@@ -207,11 +210,21 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
     return () => { if (longPressTimerRef.current) { clearInterval(longPressTimerRef.current); longPressTimerRef.current = null } }
   }, [sliderPos, isDragging, isUnlocked, isCollapsing])
 
+  // ✅ 修复：动态同步 canvas 尺寸 + 拖尾发射点改为火箭尾部
   useEffect(() => {
     if (isUnlocked) return
     const canvas = canvasRef.current; if (!canvas) return
     const ctx = canvas.getContext('2d')
     let animationFrameId
+
+    const resizeCanvas = () => {
+      if (!canvas) return
+      canvas.width = canvas.clientWidth
+      canvas.height = canvas.clientHeight
+    }
+    resizeCanvas()
+    window.addEventListener('resize', resizeCanvas)
+
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       if (isDragging) {
@@ -219,14 +232,25 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
         if (rocketEl && canvas) {
           const rocketRect = rocketEl.getBoundingClientRect()
           const canvasRect = canvas.getBoundingClientRect()
-          const pinX = rocketRect.left + rocketRect.width / 2 - canvasRect.left
-          const pinY = rocketRect.top + rocketRect.height / 2 - canvasRect.top
+          // ✅ 坐标映射：CSS 像素 → Canvas 逻辑像素
+          const scaleX = canvas.width / canvas.clientWidth
+          const scaleY = canvas.height / canvas.clientHeight
+          // ✅ 发射点改为火箭尾部（左侧偏内 8px，视觉上在喷口处）
+          const pinX = (rocketRect.left - canvasRect.left + 8) * scaleX
+          const pinY = (rocketRect.top + rocketRect.height / 2 - canvasRect.top) * scaleY
           for (let i = 0; i < 3; i++) {
             particlesRef.current.push({
-              x: pinX + (Math.random() - 0.5) * 12, y: pinY + (Math.random() - 0.5) * 12,
-              vx: -Math.random() * 2 - 1, vy: (Math.random() - 0.5) * 2,
-              size: Math.random() * 5 + 2, color: ['#84cc16', '#4ade80', '#a3e635', '#bef264', '#facc15'][Math.floor(Math.random() * 5)],
-              rotation: Math.random() * Math.PI * 2, alpha: 1, type: 'trail', gravity: 0, decay: 0.02
+              x: pinX + (Math.random() - 0.5) * 6,
+              y: pinY + (Math.random() - 0.5) * 6,
+              vx: -Math.random() * 2.5 - 0.8,
+              vy: (Math.random() - 0.5) * 1.5,
+              size: Math.random() * 4 + 2,
+              color: ['#84cc16', '#4ade80', '#a3e635', '#bef264', '#facc15'][Math.floor(Math.random() * 5)],
+              rotation: Math.random() * Math.PI * 2,
+              alpha: 1,
+              type: 'trail',
+              gravity: 0,
+              decay: 0.018
             })
           }
         }
@@ -245,7 +269,10 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
       animationFrameId = requestAnimationFrame(render)
     }
     render()
-    return () => cancelAnimationFrame(animationFrameId)
+    return () => {
+      cancelAnimationFrame(animationFrameId)
+      window.removeEventListener('resize', resizeCanvas)
+    }
   }, [isDragging, sliderPos, isUnlocked])
 
   useEffect(() => {
@@ -276,7 +303,10 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
         const foldEl = document.querySelector('[data-fold-node="true"]')
         if (foldEl) {
           const rect = foldEl.getBoundingClientRect(); const cRect = canvas.getBoundingClientRect()
-          const cx = rect.left + rect.width / 2 - cRect.left; const cy = rect.top - cRect.top
+          const scaleX = canvas.width / canvas.clientWidth
+          const scaleY = canvas.height / canvas.clientHeight
+          const cx = (rect.left + rect.width / 2 - cRect.left) * scaleX
+          const cy = (rect.top - cRect.top) * scaleY
           for (let i = 0; i < 15; i++) {
             const angle = (Math.PI * 2 * i) / 15 + (Math.random() - 0.5) * 0.5; const speed = Math.random() * 2 + 1
             particlesRef.current.push({
@@ -368,7 +398,8 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
         <div ref={trackRef} onMouseMove={handleMouseMove} onTouchMove={handleTouchMove}
           className="garden-card relative w-11/12 max-w-2xl h-60 flex items-center justify-between px-10 z-10 border border-lime-500/20"
         >
-          <canvas ref={canvasRef} width={600} height={240} className="absolute inset-0 pointer-events-none z-20 w-full h-full" />
+          {/* ✅ 移除固定 width/height，由 JS 动态同步 */}
+          <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-20 w-full h-full" />
 
           {/* 滑动轨道：与时间轴 / 节点左右端点对齐 */}
           <div ref={sliderTrackRef} className="absolute left-10 right-10 top-0 bottom-0 z-30 pointer-events-none">
@@ -508,7 +539,7 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
           animation: hand-sketch 0.8s steps(1) infinite;
         }
       `}</style>
-      
+
       <div className={!isUnlocked && !isCollapsing ? 'opacity-0' : 'opacity-100 transition-opacity duration-1000'}>
         {children}
       </div>
