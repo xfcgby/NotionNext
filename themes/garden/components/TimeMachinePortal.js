@@ -87,7 +87,7 @@ const getMilestonesFromPosts = (posts = [], startYear, currentYear) => {
     accumulatedCount += yearPostCount
 
     let growthStage = { icon: '🌰', statusText: '埋于土壤' }
-    if (accumulatedCount <= 1) { growthStage = { icon: '🌰', statusText: '埋于土壤' } }
+    if (accumulatedCount === 0) { growthStage = { icon: '🌰', statusText: '埋于土壤' } }
     else if (accumulatedCount <= 3) { growthStage = { icon: '🌱', statusText: '嫩芽破土' } }
     else if (accumulatedCount <= 8) { growthStage = { icon: '🌿', statusText: '枝叶渐茂' } }
     else if (accumulatedCount <= 15) { growthStage = { icon: '🌳', statusText: '参天大树' } }
@@ -108,7 +108,7 @@ const getMilestonesFromPosts = (posts = [], startYear, currentYear) => {
 
 export default function TimeMachinePortal({ children, posts = [], ...props }) {
   const startYear = parseInt(siteConfig('SINCE', 2025, props)) || 2025
-  const [sliderPos, setSliderPos] = useState(8)
+  const [sliderPos, setSliderPos] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isUnlocked, setIsUnlocked] = useState(true)
   const [isCollapsing, setIsCollapsing] = useState(false)
@@ -122,6 +122,7 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
   const [foldExpanded, setFoldExpanded] = useState(false)
   const [foldHovered, setFoldHovered] = useState(false)
   const trackRef = useRef(null)
+  const sliderTrackRef = useRef(null)
   const canvasRef = useRef(null)
   const particlesRef = useRef([])
 
@@ -213,16 +214,21 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
     let animationFrameId
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      if (isDragging && trackRef.current) {
-        const rect = trackRef.current.getBoundingClientRect()
-        const pinX = (sliderPos / 100) * rect.width; const pinY = rect.height / 2
-        for (let i = 0; i < 3; i++) {
-          particlesRef.current.push({
-            x: pinX + (Math.random() - 0.5) * 12, y: pinY + (Math.random() - 0.5) * 12,
-            vx: -Math.random() * 2 - 1, vy: (Math.random() - 0.5) * 2,
-            size: Math.random() * 5 + 2, color: ['#84cc16', '#4ade80', '#a3e635', '#bef264', '#facc15'][Math.floor(Math.random() * 5)],
-            rotation: Math.random() * Math.PI * 2, alpha: 1, type: 'trail', gravity: 0, decay: 0.02
-          })
+      if (isDragging) {
+        const rocketEl = document.querySelector('.time-machine-rocket')
+        if (rocketEl && canvas) {
+          const rocketRect = rocketEl.getBoundingClientRect()
+          const canvasRect = canvas.getBoundingClientRect()
+          const pinX = rocketRect.left + rocketRect.width / 2 - canvasRect.left
+          const pinY = rocketRect.top + rocketRect.height / 2 - canvasRect.top
+          for (let i = 0; i < 3; i++) {
+            particlesRef.current.push({
+              x: pinX + (Math.random() - 0.5) * 12, y: pinY + (Math.random() - 0.5) * 12,
+              vx: -Math.random() * 2 - 1, vy: (Math.random() - 0.5) * 2,
+              size: Math.random() * 5 + 2, color: ['#84cc16', '#4ade80', '#a3e635', '#bef264', '#facc15'][Math.floor(Math.random() * 5)],
+              rotation: Math.random() * Math.PI * 2, alpha: 1, type: 'trail', gravity: 0, decay: 0.02
+            })
+          }
         }
       }
       particlesRef.current.forEach((p, index) => {
@@ -285,11 +291,12 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
   }, [sliderPos, nodes, foldExpanded, foldHovered])
 
   const handleMove = (clientX) => {
-    if (!trackRef.current || isCollapsing || isUnlocked) return
-    const rect = trackRef.current.getBoundingClientRect()
+    if (!sliderTrackRef.current || isCollapsing || isUnlocked) return
+    const rect = sliderTrackRef.current.getBoundingClientRect()
     const offsetX = clientX - rect.left
     let percent = (offsetX / rect.width) * 100
-    if (percent < 6) percent = 6; if (percent > 94) percent = 94
+    if (percent < 0) percent = 0
+    if (percent > 100) percent = 100
     setSliderPos(percent)
   }
 
@@ -362,8 +369,26 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
           className="garden-card relative w-11/12 max-w-2xl h-60 flex items-center justify-between px-10 z-10 border border-lime-500/20"
         >
           <canvas ref={canvasRef} width={600} height={240} className="absolute inset-0 pointer-events-none z-20 w-full h-full" />
-          <div className="absolute left-10 right-10 h-1 bg-lime-900/10 dark:bg-lime-100/10 border-b-2 border-dashed border-lime-600/40 dark:border-lime-400/40" />
-          <div className="absolute left-10 h-1.5 bg-gradient-to-r from-lime-500 via-emerald-400 to-lime-300 rounded-full transition-all duration-75 shadow-[0_0_12px_rgba(132,204,22,0.5)]" style={{ width: `calc(${sliderPos}% - 20px)` }} />
+
+          {/* 滑动轨道：与时间轴 / 节点左右端点对齐 */}
+          <div ref={sliderTrackRef} className="absolute left-10 right-10 top-0 bottom-0 z-30 pointer-events-none">
+            {/* 时间轴背景线 */}
+            <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-lime-900/10 dark:bg-lime-100/10 border-b-2 border-dashed border-lime-600/40 dark:border-lime-400/40" />
+            {/* 进度条：0% ~ 100% 直接对应轨道宽度 */}
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-lime-500 via-emerald-400 to-lime-300 rounded-full transition-all duration-75 shadow-[0_0_12px_rgba(132,204,22,0.5)]" style={{ width: `${sliderPos}%` }} />
+
+            {/* 🚀 可拖动的花园同色系火箭 */}
+            <div onMouseDown={handleMouseDown} onTouchStart={() => setIsDragging(true)} style={{ left: `calc(${sliderPos}% - 26px)` }}
+              className={`time-machine-rocket absolute cursor-grab active:cursor-grabbing top-1/2 -translate-y-1/2 flex flex-col items-center transition-transform duration-75 pointer-events-auto ${isDragging ? 'scale-125 -rotate-6' : 'hover:scale-110'}`}
+            >
+              <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-2 border-lime-500 shadow-lg rounded-2xl p-1.5 flex items-center justify-center ring-4 ring-lime-400/20">
+                <GardenRocketIcon size={34} className="animate-hand-sketch filter drop-shadow-sm" />
+              </div>
+              <span className="text-[10px] mt-2 whitespace-nowrap bg-lime-500 text-white dark:text-slate-900 font-bold px-2.5 py-0.5 rounded-full font-mono shadow-md animate-pulse">
+                {sliderPos >= 92 ? '按住解锁!' : '拖动火箭 ➔'}
+              </span>
+            </div>
+          </div>
 
           {/* 节点渲染 */}
           {nodes.map((node, index) => {
@@ -454,18 +479,6 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
               </div>
             )
           })}
-
-          {/* 🚀 可拖动的花园同色系火箭（向右飞行） */}
-          <div onMouseDown={handleMouseDown} onTouchStart={() => setIsDragging(true)} style={{ left: `calc(${sliderPos}% - 26px)` }}
-            className={`absolute z-30 cursor-grab active:cursor-grabbing top-1/2 -translate-y-1/2 flex flex-col items-center transition-transform duration-75 ${isDragging ? 'scale-125 -rotate-6' : 'hover:scale-110'}`}
-          >
-            <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-2 border-lime-500 shadow-lg rounded-2xl p-1.5 flex items-center justify-center ring-4 ring-lime-400/20">
-              <GardenRocketIcon size={34} className="animate-hand-sketch filter drop-shadow-sm" />
-            </div>
-            <span className="text-[10px] mt-2 whitespace-nowrap bg-lime-500 text-white dark:text-slate-900 font-bold px-2.5 py-0.5 rounded-full font-mono shadow-md animate-pulse">
-              {sliderPos >= 92 ? '按住解锁!' : '拖动火箭 ➔'}
-            </span>
-          </div>
         </div>
 
         {/* 长按进度条 */}
