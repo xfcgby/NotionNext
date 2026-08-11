@@ -28,7 +28,7 @@ const GardenRocketIcon = ({ className = '', size = 34 }) => (
       d="M 50 64 C 45 70 38 75 32 75 C 32 68 33 64 34 62 Z" 
       className="fill-lime-400 dark:fill-lime-500 stroke-slate-700 dark:stroke-slate-200" 
     />
-
+    
     {/* 上(右)侧尾翼 (Lime 绿) */}
     <path 
       d="M 50 36 C 45 30 38 25 32 25 C 32 32 33 36 34 38 Z" 
@@ -156,7 +156,6 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
     const canvas = canvasRef.current
     const nodeRect = nodeEl.getBoundingClientRect()
     const canvasRect = canvas.getBoundingClientRect()
-    // ✅ 坐标映射：CSS 像素 → Canvas 逻辑像素
     const scaleX = canvas.width / canvas.clientWidth
     const scaleY = canvas.height / canvas.clientHeight
     const cx = (nodeRect.left + nodeRect.width / 2 - canvasRect.left) * scaleX
@@ -210,7 +209,7 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
     return () => { if (longPressTimerRef.current) { clearInterval(longPressTimerRef.current); longPressTimerRef.current = null } }
   }, [sliderPos, isDragging, isUnlocked, isCollapsing])
 
-  // ✅ 修复：动态同步 canvas 尺寸 + 拖尾发射点改为火箭尾部
+  // ✅ 拖尾粒子：动态同步 canvas 尺寸 + 尾部发射 + CSS→Canvas 坐标映射
   useEffect(() => {
     if (isUnlocked) return
     const canvas = canvasRef.current; if (!canvas) return
@@ -232,10 +231,9 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
         if (rocketEl && canvas) {
           const rocketRect = rocketEl.getBoundingClientRect()
           const canvasRect = canvas.getBoundingClientRect()
-          // ✅ 坐标映射：CSS 像素 → Canvas 逻辑像素
           const scaleX = canvas.width / canvas.clientWidth
           const scaleY = canvas.height / canvas.clientHeight
-          // ✅ 发射点改为火箭尾部（左侧偏内 8px，视觉上在喷口处）
+          // 发射点：火箭尾部（左侧偏内 8px）
           const pinX = (rocketRect.left - canvasRect.left + 8) * scaleX
           const pinY = (rocketRect.top + rocketRect.height / 2 - canvasRect.top) * scaleY
           for (let i = 0; i < 3; i++) {
@@ -398,17 +396,17 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
         <div ref={trackRef} onMouseMove={handleMouseMove} onTouchMove={handleTouchMove}
           className="garden-card relative w-11/12 max-w-2xl h-60 flex items-center justify-between px-10 z-10 border border-lime-500/20"
         >
-          {/* ✅ 移除固定 width/height，由 JS 动态同步 */}
-          <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-20 w-full h-full" />
+          {/* ✅ 中层：粒子 canvas（z-[35]，在时间轴之上，在火箭之下） */}
+          <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-[35] w-full h-full" />
 
-          {/* 滑动轨道：与时间轴 / 节点左右端点对齐 */}
-          <div ref={sliderTrackRef} className="absolute left-10 right-10 top-0 bottom-0 z-30 pointer-events-none">
-            {/* 时间轴背景线 */}
+          {/* ✅ 底层：时间轴背景线 + 进度条（z-20） */}
+          <div className="absolute left-10 right-10 top-0 bottom-0 z-20 pointer-events-none">
             <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-lime-900/10 dark:bg-lime-100/10 border-b-2 border-dashed border-lime-600/40 dark:border-lime-400/40" />
-            {/* 进度条：0% ~ 100% 直接对应轨道宽度 */}
             <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-lime-500 via-emerald-400 to-lime-300 rounded-full transition-all duration-75 shadow-[0_0_12px_rgba(132,204,22,0.5)]" style={{ width: `${sliderPos}%` }} />
+          </div>
 
-            {/* 🚀 可拖动的花园同色系火箭 */}
+          {/* ✅ 顶层：火箭（z-40，同时作为 sliderTrackRef 用于位置计算） */}
+          <div ref={sliderTrackRef} className="absolute left-10 right-10 top-0 bottom-0 z-40 pointer-events-none">
             <div onMouseDown={handleMouseDown} onTouchStart={() => setIsDragging(true)} style={{ left: `calc(${sliderPos}% - 26px)` }}
               className={`time-machine-rocket absolute cursor-grab active:cursor-grabbing top-1/2 -translate-y-1/2 flex flex-col items-center transition-transform duration-75 pointer-events-auto ${isDragging ? 'scale-125 -rotate-6' : 'hover:scale-110'}`}
             >
@@ -539,7 +537,7 @@ export default function TimeMachinePortal({ children, posts = [], ...props }) {
           animation: hand-sketch 0.8s steps(1) infinite;
         }
       `}</style>
-
+      
       <div className={!isUnlocked && !isCollapsing ? 'opacity-0' : 'opacity-100 transition-opacity duration-1000'}>
         {children}
       </div>
