@@ -298,7 +298,7 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
           let finalWeather = weather
           if (typeof window !== 'undefined' && window.__weatherInfo && window.__weatherInfo.text) {
             const globalText = window.__weatherInfo.text
-            if (globalText && (globalText.includes('雨') || globalText.includes('雷') || globalText.includes('雪') || globalText.includes('雾') || globalText.includes('云'))) {
+            if (globalText && (globalText.includes('雨') || globalText.includes('雷') || globalText.includes('雪') || globalText.includes('雾') || globalText.includes('云')|| globalText.includes('阴'))) {
               if (weather === '晴' || weather === 'undefined' || !weather || weather === '加载中') {
                 finalWeather = globalText
               }
