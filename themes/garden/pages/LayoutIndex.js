@@ -16,7 +16,7 @@ import TimeMachinePortal from '../components/TimeMachinePortal'
  * ==========================================================================
  */
 const LayoutIndex = props => {
-  const { notice, tags, posts, weatherInfo } = props
+  const { notice, tags, posts, weatherInfo, month } = props
   const [activeYear, setActiveYear] = useState(new Date().getFullYear().toString())
 
   // 💡 拼接完整的天气描述文本（包含 text, tip, alert）
@@ -102,12 +102,13 @@ const LayoutIndex = props => {
             </div>
 
             {/* 💡 传递 combinedWeatherText 给 GardenTree */}
-            <GardenTree
-              key={activeYear}
-              posts={historyAccumulatedPosts}
-              currentYear={activeYear}
-              weatherText={combinedWeatherText}
-            />
+           <GardenTree
+  key={activeYear}
+  posts={historyAccumulatedPosts}
+  currentYear={activeYear}
+  weatherText={combinedWeatherText}
+  month={month}
+/>
           </div>
 
           {/* 热力图 */}
