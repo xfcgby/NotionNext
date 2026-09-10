@@ -275,7 +275,14 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
               p.ellipse(0, 0, 9 * sizeScale, 9 * sizeScale)
               p.fill(255, 255, 255, 180 * leafVisibility)
               p.ellipse(-1.5, -1.5, 3.5, 3.5)
-            } else if (curMonth === 12 || curMonth <= 2) {
+            }else if (curMonth >= 9 && curMonth <= 11) {
+      // 🍁 秋季 (9-11月)：暖橙/金黄枫叶感
+      p.fill(234, 88, 12, 210 * leafVisibility) // 边缘深暖橙色
+      p.ellipse(0, 0, 10.5 * sizeScale, 6.5 * sizeScale)
+      p.fill(251, 191, 36, 230 * leafVisibility) // 内芯亮金黄色
+      p.ellipse(-0.5, 0, 7.5 * sizeScale, 4 * sizeScale)
+    }
+            else if (curMonth === 12 || curMonth <= 2) {
               p.fill(160, 200, 230, 180 * leafVisibility)
               p.rect(-4, -4, 8 * sizeScale, 8 * sizeScale, 3)
               p.fill(210, 235, 255, 220 * leafVisibility)
