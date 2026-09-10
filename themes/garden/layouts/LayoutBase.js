@@ -89,9 +89,13 @@ const LayoutBase = props => {
 
       <div className="flex-grow w-full pt-16">
         {/* 💡 将完整 weatherInfo 透传给子页面 */}
-        {React.isValidElement(children)
-          ? React.cloneElement(children, { weatherInfo })
-          : children}
+        {/* 💡 自动获取当前真实系统月份，并与 weatherInfo 一起透传给子页面 */}
+{React.isValidElement(children)
+  ? React.cloneElement(children, { 
+      weatherInfo, 
+      month: new Date().getMonth() + 1 // 👈 动态自动获取当前月份（比如 9 月就会自动传 9）
+    })
+  : children}
       </div>
 
       <RightFloatArea floatSlot={floatSlot} />
