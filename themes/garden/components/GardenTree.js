@@ -300,8 +300,12 @@ const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', 
         }
 
         p.draw = () => {
-          const { posts: allPosts, currentYear: year, weatherText: weather, month: curMonth } = dataRef.current
-
+          const { posts: allPosts, currentYear: year, weatherText: weather } = dataRef.current
+// 🍂 月份兜底：props 未传入或非法时自动读取真实系统月份
+const rawMonth = dataRef.current.month
+const curMonth = (typeof rawMonth === 'number' && rawMonth >= 1 && rawMonth <= 12)
+  ? rawMonth
+  : (new Date().getMonth() + 1)
           let finalWeather = weather
           if (typeof window !== 'undefined' && window.__weatherInfo && window.__weatherInfo.text) {
             const globalText = window.__weatherInfo.text
