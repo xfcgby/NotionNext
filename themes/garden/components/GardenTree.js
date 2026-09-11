@@ -6,7 +6,7 @@ import React, { useEffect, useRef, memo } from 'react'
  * ✨ 特效：雷雨闪电、流动迷雾、全天气覆盖粒子系统（雨/雪/云/冰雹/雨夹雪）
  * ⚡ 优化：零 GC 开销复用 Vector、完备的雷电残影清理与极端性能防护
  */
-const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', month = 7, onCategoryFilter }) => {
+const GardenTree = memo(({ posts = [], currentYear = 2026, weatherText = '晴', month , onCategoryFilter }) => {
   const containerRef = useRef(null)
   const p5InstanceRef = useRef(null)
   const dataRef = useRef({ posts, currentYear, weatherText, month })
